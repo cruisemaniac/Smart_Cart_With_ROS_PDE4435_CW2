@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='jayashanka',
     maintainer_email='jayashanka@todo.todo',
-    description='TODO: Package description',
+    description='Navigation package for smart cart',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'navigation_node = smart_cart_navigation.navigation_node:main',
         ],
     },
 )
