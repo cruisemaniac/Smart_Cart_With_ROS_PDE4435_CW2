@@ -9,7 +9,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='jayashanka',
-    maintainer_email='your_email@example.com',
+    maintainer_email='jayasankaanushan199@gmail.com',
     description='Smart Cart follow-me and obstacle avoidance nodes',
     license='MIT',
 

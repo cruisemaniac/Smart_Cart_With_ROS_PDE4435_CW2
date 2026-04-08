@@ -14,7 +14,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='jayashanka',
-    maintainer_email='jayashanka@todo.todo',
+    maintainer_email='jayasankaanushan199@gmail.com',
     description='Navigation package for smart cart',
     license='TODO: License declaration',
     extras_require={
