@@ -32,8 +32,10 @@ project(smart_cart_gazebo)
 find_package(ament_cmake REQUIRED)
 find_package(ros_gz_sim REQUIRED)
 
-install(DIRECTORY worlds launch config
+# Install worlds, launch, config, and models directories
+install(DIRECTORY worlds launch config models
   DESTINATION share/${PROJECT_NAME}
+  OPTIONAL
 )
 
 ament_package()

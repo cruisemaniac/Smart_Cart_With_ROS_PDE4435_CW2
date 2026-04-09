@@ -23,6 +23,12 @@ sudo apt install -y \
   ros-jazzy-rviz2
 ```
 
+```
+To be install xterm
+
+sudo apt install xterm
+```
+
 ---
 
 ## Step 1 — Create the ROS 2 workspace
