@@ -1,65 +1,73 @@
-# ROS 2 Jazzy <--> Gazebo Harmonic topic bridge
-# Format: gz_topic_name @ ros_msg_type @ direction
-# [gz_to_ros] = Gazebo → ROS
-# [ros_to_gz] = ROS → Gazebo
-# [bidirectional] = both ways
+# ros_gz_bridge.yaml
+# ROS 2 Jazzy  <-->  Gazebo Harmonic  topic bridge
+# ─────────────────────────────────────────────────────────────────────────────
+# direction: GZ_TO_ROS  =  Gazebo publishes  →  ROS subscribes
+# direction: ROS_TO_GZ  =  ROS publishes     →  Gazebo subscribes
+# ─────────────────────────────────────────────────────────────────────────────
 
+# ── LiDAR (RPLIDAR A1, 360°) ─────────────────────────────────────────────────
 - ros_topic_name: /scan
-  gz_topic_name: /scan
-  ros_type_name: sensor_msgs/msg/LaserScan
-  gz_type_name: gz.msgs.LaserScan
+  gz_topic_name:  /scan
+  ros_type_name:  sensor_msgs/msg/LaserScan
+  gz_type_name:   gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
-- ros_topic_name: /camera/depth/image_raw
-  gz_topic_name: /camera/depth_image
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /camera/color/image_raw
-  gz_topic_name: /camera/image
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /camera/camera_info
-  gz_topic_name: /camera/camera_info
-  ros_type_name: sensor_msgs/msg/CameraInfo
-  gz_type_name: gz.msgs.CameraInfo
-  direction: GZ_TO_ROS
-
+# ── Ultrasonic sensors (HC-SR04, modelled as narrow ray sensors) ──────────────
 - ros_topic_name: /ultrasonic/left
-  gz_topic_name: /ultrasonic/left
-  ros_type_name: sensor_msgs/msg/LaserScan
-  gz_type_name: gz.msgs.LaserScan
+  gz_topic_name:  /ultrasonic/left
+  ros_type_name:  sensor_msgs/msg/LaserScan
+  gz_type_name:   gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
 - ros_topic_name: /ultrasonic/right
-  gz_topic_name: /ultrasonic/right
-  ros_type_name: sensor_msgs/msg/LaserScan
-  gz_type_name: gz.msgs.LaserScan
+  gz_topic_name:  /ultrasonic/right
+  ros_type_name:  sensor_msgs/msg/LaserScan
+  gz_type_name:   gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
+# ── Depth camera (Intel RealSense D435) ───────────────────────────────────────
+- ros_topic_name: /camera/color/image_raw
+  gz_topic_name:  /camera/image
+  ros_type_name:  sensor_msgs/msg/Image
+  gz_type_name:   gz.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/depth/image_raw
+  gz_topic_name:  /camera/depth_image
+  ros_type_name:  sensor_msgs/msg/Image
+  gz_type_name:   gz.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera_info
+  gz_topic_name:  /camera/camera_info
+  ros_type_name:  sensor_msgs/msg/CameraInfo
+  gz_type_name:   gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+
+# ── Odometry ─────────────────────────────────────────────────────────────────
 - ros_topic_name: /odom
-  gz_topic_name: /odom
-  ros_type_name: nav_msgs/msg/Odometry
-  gz_type_name: gz.msgs.Odometry
+  gz_topic_name:  /odom
+  ros_type_name:  nav_msgs/msg/Odometry
+  gz_type_name:   gz.msgs.Odometry
   direction: GZ_TO_ROS
 
+# ── Joint states  (FIX: gz.msgs.Model_V, not gz.msgs.Model) ──────────────────
 - ros_topic_name: /joint_states
-  gz_topic_name: /joint_states
-  ros_type_name: sensor_msgs/msg/JointState
-  gz_type_name: gz.msgs.Model
+  gz_topic_name:  /joint_states
+  ros_type_name:  sensor_msgs/msg/JointState
+  gz_type_name:   gz.msgs.Model_V
   direction: GZ_TO_ROS
 
-- ros_topic_name: /cmd_vel
-  gz_topic_name: /cmd_vel
-  ros_type_name: geometry_msgs/msg/Twist
-  gz_type_name: gz.msgs.Twist
-  direction: ROS_TO_GZ
-
+# ── TF (robot pose transforms) ───────────────────────────────────────────────
 - ros_topic_name: /tf
-  gz_topic_name: /tf
-  ros_type_name: tf2_msgs/msg/TFMessage
-  gz_type_name: gz.msgs.Pose_V
+  gz_topic_name:  /tf
+  ros_type_name:  tf2_msgs/msg/TFMessage
+  gz_type_name:   gz.msgs.Pose_V
   direction: GZ_TO_ROS
+
+# ── Velocity command (ROS → Gazebo drive plugin) ──────────────────────────────
+- ros_topic_name: /cmd_vel
+  gz_topic_name:  /cmd_vel
+  ros_type_name:  geometry_msgs/msg/Twist
+  gz_type_name:   gz.msgs.Twist
+  direction: ROS_TO_GZ
