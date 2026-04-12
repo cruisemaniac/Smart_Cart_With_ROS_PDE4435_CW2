@@ -15,14 +15,15 @@ setup(
     zip_safe=True,
     maintainer='jayashanka',
     maintainer_email='jayasankaanushan199@gmail.com',
-    description='Navigation state machine for Smart Cart',
+    description='Navigation and UWB simulation for Smart Cart',
     license='MIT',
     extras_require={
         'test': ['pytest'],
     },
     entry_points={
         'console_scripts': [
-            'navigation_node = smart_cart_navigation.navigation_node:main',
+            'navigation_node     = smart_cart_navigation.navigation_node:main',
+            'uwb_simulator_node  = smart_cart_navigation.uwb_simulator_node:main',
         ],
     },
 )

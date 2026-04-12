@@ -124,9 +124,9 @@ class TeleopPersonNode(Node):
         elif key in ('s', '\x1b[B'):    # S or Down arrow
             cmd.linear.x = -self._linear_speed
         elif key in ('a', '\x1b[D'):    # A or Left arrow
-            cmd.angular.z = self._angular_speed
-        elif key in ('d', '\x1b[C'):    # D or Right arrow
             cmd.angular.z = -self._angular_speed
+        elif key in ('d', '\x1b[C'):    # D or Right arrow
+            cmd.angular.z = self._angular_speed
         elif key == 'q':                # strafe left
             cmd.linear.y = self._linear_speed
         elif key == 'e':                # strafe right

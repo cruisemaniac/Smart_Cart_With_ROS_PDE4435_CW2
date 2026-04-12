@@ -1,16 +1,26 @@
 """
 start_all.launch.py
-Cart starts IDLE. Person teleop opens in a new xterm window.
-Press [2] in the teleop window to activate follow-me.
+════════════════════════════════════════════════════════════
+Single command: ros2 launch smart_cart_behaviour start_all.launch.py
+
+After launch completes, open a second terminal:
+  ros2 run smart_cart_behaviour teleop_person_node
+
+Controls:
+  W/S    move person forward/backward
+  A/D    turn person left/right
+  1      remote STOP   – cart stops
+  2      remote FOLLOW – cart follows person
+  3      remote IDLE   – cart standby
+  +/-    person speed
+  ESC    quit
 """
 
 import os
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (
-    IncludeLaunchDescription, TimerAction, LogInfo, ExecuteProcess
-)
+from launch.actions import IncludeLaunchDescription, TimerAction, LogInfo
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
@@ -30,9 +40,12 @@ def generate_launch_description():
 
     return LaunchDescription([
 
-        LogInfo(msg='[SmartCart] Launching... Cart will be IDLE. Press [2] in teleop to follow.'),
+        LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
+        LogInfo(msg='  Smart Cart Simulation – UWB + LiDAR Follow-Me'),
+        LogInfo(msg='  Cart starts IDLE. Run teleop in a second terminal.'),
+        LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
 
-        # t=0 Gazebo
+        # ── t=0  Gazebo ──────────────────────────────────────────────────
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(
@@ -40,24 +53,31 @@ def generate_launch_description():
                     'launch', 'gz_sim.launch.py'
                 )
             ),
-            launch_arguments={'gz_args': f'-r {world_file}', 'on_exit_shutdown': 'true'}.items(),
+            launch_arguments={
+                'gz_args': f'-r {world_file}',
+                'on_exit_shutdown': 'true',
+            }.items(),
         ),
 
-        # t=0 Robot State Publisher
+        # ── t=0  Robot State Publisher ───────────────────────────────────
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
-            parameters=[{'robot_description': robot_urdf, 'use_sim_time': True}],
+            parameters=[{'robot_description': robot_urdf,
+                         'use_sim_time': False}],
         ),
 
-        # t=3 Spawn smart cart
+        # ── t=3  Spawn smart cart ────────────────────────────────────────
         TimerAction(period=3.0, actions=[
+            LogInfo(msg='[1/5] Spawning Smart Cart...'),
             Node(
-                package='ros_gz_sim', executable='create', name='spawn_smart_cart',
+                package='ros_gz_sim', executable='create',
+                name='spawn_smart_cart',
                 arguments=[
-                    '-name', 'smart_cart', '-topic', '/robot_description',
+                    '-name', 'smart_cart',
+                    '-topic', '/robot_description',
                     '-x', '0.0', '-y', '0.0', '-z', '0.20',
                     '-R', '0.0', '-P', '0.0', '-Y', '0.0',
                 ],
@@ -65,23 +85,26 @@ def generate_launch_description():
             ),
         ]),
 
-        # t=4 Spawn person actor
+        # ── t=4  Spawn person ────────────────────────────────────────────
+        # Spawned at x=-2.0 (in front of cart based on cart orientation)
         TimerAction(period=4.0, actions=[
-            LogInfo(msg='Spawning person actor...'),
+            LogInfo(msg='[2/5] Spawning person actor...'),
             Node(
-                package='ros_gz_sim', executable='create', name='spawn_person',
+                package='ros_gz_sim', executable='create',
+                name='spawn_person',
                 arguments=[
                     '-name', 'person',
                     '-file', person_sdf_file,
-                    '-x', '1.5', '-y', '0.0', '-z', '0.0',
+                    '-x', '-2.0', '-y', '0.0', '-z', '0.12',
                     '-R', '0.0', '-P', '0.0', '-Y', '0.0',
                 ],
                 output='screen',
             ),
         ]),
 
-        # t=5 Bridge
+        # ── t=5  ROS-Gz bridge ───────────────────────────────────────────
         TimerAction(period=5.0, actions=[
+            LogInfo(msg='[3/5] Starting ROS-Gz bridge...'),
             Node(
                 package='ros_gz_bridge', executable='parameter_bridge',
                 name='ros_gz_bridge', output='screen',
@@ -89,65 +112,71 @@ def generate_launch_description():
             ),
         ]),
 
-        # t=6 Behaviour + Navigation (cart starts IDLE)
+        # ── t=6  All ROS 2 nodes ─────────────────────────────────────────
         TimerAction(period=6.0, actions=[
-            LogInfo(msg='Starting behaviour nodes. Cart is IDLE.'),
+            LogInfo(msg='[4/5] Starting all nodes...'),
+
+            # Obstacle stop (safety layer)
             Node(
-                package='smart_cart_behaviour', executable='obstacle_stop_node',
-                name='obstacle_stop_node', output='screen',
-                parameters=[{'use_sim_time': True}],
+                package='smart_cart_behaviour',
+                executable='obstacle_stop_node',
+                name='obstacle_stop_node',
+                output='screen',
+                parameters=[{'use_sim_time': False}],
             ),
+
+            # Follow-Me (UWB distance + LiDAR angle)
             Node(
-                package='smart_cart_behaviour', executable='follow_me_node',
-                name='follow_me_node', output='screen',
-                parameters=[{'use_sim_time': True}],
+                package='smart_cart_behaviour',
+                executable='follow_me_node',
+                name='follow_me_node',
+                output='screen',
+                parameters=[{'use_sim_time': False}],
             ),
+
+            # Navigation state machine
             Node(
-                package='smart_cart_navigation', executable='navigation_node',
-                name='navigation_node', output='screen',
+                package='smart_cart_navigation',
+                executable='navigation_node',
+                name='navigation_node',
+                output='screen',
                 parameters=[{
-                    'use_sim_time':    True,
+                    'use_sim_time':    False,
                     'mode':            'idle',
                     'follow_distance': 1.0,
                     'max_speed':       0.8,
                     'target_timeout':  5.0,
                 }],
             ),
-        ]),
 
-        # t=7 Person teleop window
-        # Opens a separate xterm window – this IS the remote control.
-        # If xterm is not installed: sudo apt install xterm
-        TimerAction(period=7.0, actions=[
-            LogInfo(msg='Opening teleop window (W/A/S/D + buttons 1/2/3)...'),
-            ExecuteProcess(
-                cmd=[
-                    'xterm',
-                    '-fa', 'Monospace', '-fs', '12',
-                    '-bg', 'black', '-fg', 'cyan',
-                    '-title', 'Smart Cart Remote Control',
-                    '-geometry', '62x22',
-                    '-e',
-                    'bash', '-c',
-                    (
-                        'source /opt/ros/jazzy/setup.bash && '
-                        'source /home/jayashanka/ros/jazzy_ws/install/setup.bash && '
-                        'ros2 run smart_cart_behaviour teleop_person_node; '
-                        'echo ""; echo "Teleop ended. Press Enter to close."; read'
-                    ),
-                ],
+            # UWB simulator (trilateration via odometry)
+            Node(
+                package='smart_cart_navigation',
+                executable='uwb_simulator_node',
+                name='uwb_simulator_node',
                 output='screen',
+                parameters=[{'use_sim_time': False}],
             ),
         ]),
 
-        # t=8 RViz2
-        TimerAction(period=8.0, actions=[
+        # ── t=7  RViz2 ───────────────────────────────────────────────────
+        TimerAction(period=7.0, actions=[
             Node(
                 package='rviz2', executable='rviz2', name='rviz2',
                 output='screen',
-                arguments=['-d', rviz_config] if os.path.exists(rviz_config) else [],
-                parameters=[{'use_sim_time': True}],
+                arguments=['-d', rviz_config]
+                    if os.path.exists(rviz_config) else [],
+                parameters=[{'use_sim_time': False}],
             ),
+        ]),
+
+        # ── t=8  Instructions ────────────────────────────────────────────
+        TimerAction(period=8.0, actions=[
+            LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
+            LogInfo(msg='  READY. Open a new terminal and run:'),
+            LogInfo(msg='  ros2 run smart_cart_behaviour teleop_person_node'),
+            LogInfo(msg='  W/S=move  A/D=turn  2=FOLLOW  1=STOP  3=IDLE'),
+            LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
         ]),
 
     ])

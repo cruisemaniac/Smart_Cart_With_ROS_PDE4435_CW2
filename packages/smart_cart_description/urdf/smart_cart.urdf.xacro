@@ -24,6 +24,9 @@
   <material name="grey_sensor">
     <color rgba="0.6 0.6 0.6 1.0"/>
   </material>
+  <material name="cyan_uwb">
+    <color rgba="0.0 1.0 1.0 1.0"/>
+  </material>
 
   <!-- ================================================ -->
   <!-- BASE LINK                                        -->
@@ -62,7 +65,6 @@
   <!-- OMNI WHEEL MACRO                                 -->
   <!-- ================================================ -->
   <xacro:macro name="omni_wheel" params="name x y z">
-
     <link name="${name}_wheel">
       <visual>
         <geometry>
@@ -84,7 +86,6 @@
           ixy="0" ixz="0" iyz="0"/>
       </inertial>
     </link>
-
     <joint name="${name}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child  link="${name}_wheel"/>
@@ -92,8 +93,6 @@
       <axis xyz="0 0 1"/>
       <dynamics damping="0.01" friction="0.01"/>
     </joint>
-
-    <!-- Gazebo Harmonic: low lateral friction to simulate omni rollers -->
     <gazebo reference="${name}_wheel">
       <mu1>0.5</mu1>
       <mu2>0.05</mu2>
@@ -101,14 +100,69 @@
       <kd>1.0</kd>
       <material>Gazebo/Black</material>
     </gazebo>
-
   </xacro:macro>
 
-  <!-- 4 wheels: FL, FR, RL, RR -->
+  <!-- 4 wheels -->
   <xacro:omni_wheel name="front_left"  x=" 0.25" y=" 0.27" z="-0.10"/>
   <xacro:omni_wheel name="front_right" x=" 0.25" y="-0.27" z="-0.10"/>
   <xacro:omni_wheel name="rear_left"   x="-0.25" y=" 0.27" z="-0.10"/>
   <xacro:omni_wheel name="rear_right"  x="-0.25" y="-0.27" z="-0.10"/>
+
+  <!-- ================================================ -->
+  <!-- UWB ANCHOR MACRO                                 -->
+  <!-- 4 anchors at cart corners – visual only          -->
+  <!-- Real UWB trilateration handled by                -->
+  <!-- uwb_simulator_node.py using odometry data        -->
+  <!-- ================================================ -->
+  <xacro:macro name="uwb_anchor" params="name x y">
+
+    <link name="${name}_uwb_anchor">
+
+      <!-- Anchor housing – small grey box -->
+      <visual>
+        <geometry>
+          <box size="0.04 0.04 0.03"/>
+        </geometry>
+        <material name="grey_sensor"/>
+      </visual>
+
+      <!-- Cyan glow sphere – indicates active UWB signal -->
+      <visual>
+        <origin xyz="0 0 0.03" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.025"/>
+        </geometry>
+        <material name="cyan_uwb"/>
+      </visual>
+
+      <inertial>
+        <mass value="0.05"/>
+        <inertia ixx="0.00001" iyy="0.00001" izz="0.00001"
+                 ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+
+    </link>
+
+    <joint name="${name}_uwb_joint" type="fixed">
+      <parent link="base_link"/>
+      <child  link="${name}_uwb_anchor"/>
+      <!-- Mounted at top corners of cart body -->
+      <origin xyz="${x} ${y} 0.19" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Gazebo: make the glow emissive so it's visible -->
+    <gazebo reference="${name}_uwb_anchor">
+      <material>Gazebo/Cyan</material>
+    </gazebo>
+
+  </xacro:macro>
+
+  <!-- 4 UWB anchors at cart corners -->
+  <!-- FL = front-left, FR = front-right, RL = rear-left, RR = rear-right -->
+  <xacro:uwb_anchor name="uwb_fl" x=" 0.32" y=" 0.23"/>
+  <xacro:uwb_anchor name="uwb_fr" x=" 0.32" y="-0.23"/>
+  <xacro:uwb_anchor name="uwb_rl" x="-0.32" y=" 0.23"/>
+  <xacro:uwb_anchor name="uwb_rr" x="-0.32" y="-0.23"/>
 
   <!-- ================================================ -->
   <!-- 2D LIDAR – RPLIDAR A1                           -->
@@ -123,7 +177,8 @@
     </collision>
     <inertial>
       <mass value="0.17"/>
-      <inertia ixx="0.0001" iyy="0.0001" izz="0.0001" ixy="0" ixz="0" iyz="0"/>
+      <inertia ixx="0.0001" iyy="0.0001" izz="0.0001"
+               ixy="0" ixz="0" iyz="0"/>
     </inertial>
   </link>
 
@@ -133,7 +188,6 @@
     <origin xyz="0.25 0 0.20" rpy="0 0 0"/>
   </joint>
 
-  <!-- Gazebo Harmonic LiDAR sensor -->
   <gazebo reference="lidar_link">
     <sensor name="lidar" type="gpu_lidar">
       <gz_frame_id>lidar_link</gz_frame_id>
@@ -177,7 +231,8 @@
     </collision>
     <inertial>
       <mass value="0.072"/>
-      <inertia ixx="0.0001" iyy="0.0001" izz="0.0001" ixy="0" ixz="0" iyz="0"/>
+      <inertia ixx="0.0001" iyy="0.0001" izz="0.0001"
+               ixy="0" ixz="0" iyz="0"/>
     </inertial>
   </link>
 
@@ -187,7 +242,6 @@
     <origin xyz="0.35 0 0.20" rpy="0 0.15 0"/>
   </joint>
 
-  <!-- Optical frame – required for correct image projection -->
   <link name="camera_optical_link"/>
   <joint name="camera_optical_joint" type="fixed">
     <parent link="camera_link"/>
@@ -195,7 +249,6 @@
     <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
   </joint>
 
-  <!-- Gazebo Harmonic depth camera sensor -->
   <gazebo reference="camera_link">
     <sensor name="depth_camera" type="depth_camera">
       <gz_frame_id>camera_optical_link</gz_frame_id>
@@ -210,10 +263,7 @@
           <height>480</height>
           <format>R8G8B8</format>
         </image>
-        <clip>
-          <near>0.1</near>
-          <far>10.0</far>
-        </clip>
+        <clip><near>0.1</near><far>10.0</far></clip>
         <noise>
           <type>gaussian</type>
           <mean>0.0</mean>
@@ -227,7 +277,6 @@
   <!-- ULTRASONIC SENSORS – HC-SR04 (2x front)         -->
   <!-- ================================================ -->
   <xacro:macro name="ultrasonic" params="name y_offset">
-
     <link name="${name}_us_link">
       <visual>
         <geometry><box size="0.015 0.015 0.012"/></geometry>
@@ -235,17 +284,15 @@
       </visual>
       <inertial>
         <mass value="0.009"/>
-        <inertia ixx="0.00001" iyy="0.00001" izz="0.00001" ixy="0" ixz="0" iyz="0"/>
+        <inertia ixx="0.00001" iyy="0.00001" izz="0.00001"
+                 ixy="0" ixz="0" iyz="0"/>
       </inertial>
     </link>
-
     <joint name="${name}_us_joint" type="fixed">
       <parent link="base_link"/>
       <child  link="${name}_us_link"/>
       <origin xyz="0.36 ${y_offset} 0.05" rpy="0 0 0"/>
     </joint>
-
-    <!-- Gazebo Harmonic: model ultrasonic as narrow GPU ray sensor -->
     <gazebo reference="${name}_us_link">
       <sensor name="${name}_ultrasonic" type="gpu_lidar">
         <gz_frame_id>${name}_us_link</gz_frame_id>
@@ -269,7 +316,6 @@
         </lidar>
       </sensor>
     </gazebo>
-
   </xacro:macro>
 
   <xacro:ultrasonic name="left"  y_offset=" 0.10"/>
@@ -298,7 +344,7 @@
     </plugin>
   </gazebo>
 
-  <!-- Joint state publisher plugin – Gazebo Harmonic -->
+  <!-- Joint state publisher plugin -->
   <gazebo>
     <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">
