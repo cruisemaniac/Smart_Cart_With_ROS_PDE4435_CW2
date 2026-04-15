@@ -1,65 +1,78 @@
 #!/usr/bin/env python3
 """
-follow_me_node.py  –  Smart Cart Follow-Me
-==========================================
+follow_me_node.py  –  Smart Cart Follow-Me (UWB Trilateration + LiDAR)
+=======================================================================
 Architecture (matches CW1 spec):
 
-  UWB  →  distance to person  →  linear speed control
-  LiDAR → angle to person     →  angular steering control
+  UWB anchors (4 corners) → trilaterate person XY in cart frame
+  → distance from cart CENTRE (0,0) to person
+  → linear speed control (approach / hold / back off)
 
-  UWB gives reliable identity-locked distance measurement.
-  LiDAR gives precise angle for steering.
+  LiDAR 360° → precise angle to closest object
+  → angular steering to face person
 
-  If UWB is unavailable (no /uwb/distance yet), falls back
-  to LiDAR-only mode (360° closest cluster).
+  Front LiDAR safety zone → emergency stop if obstacle < 0.5m
 
-Control zones:
-  dist > 1.2m   →  move forward
-  dist < 0.8m   →  back off slowly
-  0.8m – 1.2m   →  dead zone, just align
-  always        →  angular correction toward person
+Identity lock:
+  UWB trilateration always follows THIS person's tag (unique signal).
+  Falls back to LiDAR-only distance if UWB times out.
 
-Gate:
-  Only active when /nav/current_mode = "FOLLOW"
+Anchor positions (match smart_cart.urdf.xacro exactly):
+  A0 = front-left  ( 0.32,  0.23)
+  A1 = front-right ( 0.32, -0.23)
+  A2 = rear-left   (-0.32,  0.23)
+  A3 = rear-right  (-0.32, -0.23)
 
 Topics
 ------
-  Sub: /scan             LaserScan   – precise angle to person
-  Sub: /uwb/distance     Float32     – UWB distance measurement
-  Sub: /uwb/angle        Float32     – UWB angle measurement
-  Sub: /nav/current_mode String      – mode gate
-  Pub: /cmd_vel_raw      Twist       – velocity command
+  Sub: /uwb/distances     Float32MultiArray  [d0,d1,d2,d3]
+  Sub: /scan              LaserScan
+  Sub: /nav/current_mode  String
+  Pub: /cmd_vel_raw       Twist
 """
 
 import math
+import time
+import numpy as np
+
 import rclpy
 import rclpy.clock
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32MultiArray
 
 
-# ── Distance control (from UWB) ───────────────────────────────────────────────
-FOLLOW_DIST_M   = 1.0    # target gap between cart and person
-DEAD_ZONE_M     = 0.20   # ±0.2m tolerance = [0.8m, 1.2m] comfort zone
-BACKUP_SPEED    = 0.20   # m/s slow reverse when too close
+# ── Anchor positions in cart body frame (must match URDF) ────────────────────
+ANCHORS = np.array([
+    [ 0.32,  0.23],   # A0 front-left
+    [ 0.32, -0.23],   # A1 front-right
+    [-0.32,  0.23],   # A2 rear-left
+    [-0.32, -0.23],   # A3 rear-right
+])
+
+# ── Distance control ──────────────────────────────────────────────────────────
+FOLLOW_DIST_M    = 1.0    # target gap from cart centre to person
+DEAD_ZONE_M      = 0.20   # ±0.2m comfort band → [0.8m, 1.2m]
+BACKUP_SPEED     = 0.20   # m/s slow reverse when too close
+EMERGENCY_STOP_M = 0.50   # LiDAR front emergency stop distance
 
 # ── Speed limits ──────────────────────────────────────────────────────────────
-MAX_LINEAR_VEL  = 0.8    # m/s – CW1 software cap near humans
-MAX_ANGULAR_VEL = 1.2    # rad/s
+MAX_LINEAR_VEL   = 0.8    # m/s
+MAX_ANGULAR_VEL  = 1.2    # rad/s
 
 # ── Controller gains ─────────────────────────────────────────────────────────
-KP_LINEAR       = 0.5    # proportional gain for distance error
-KP_ANGULAR      = 0.9    # proportional gain for angle error
+KP_LINEAR        = 0.6
+KP_ANGULAR       = 1.0
 
-# ── LiDAR detection params (fallback + angle refinement) ─────────────────────
-MIN_DETECT_DIST = 0.15   # ignore cart's own reflections
-MAX_DETECT_DIST = 6.0    # full supermarket range
-CLUSTER_POINTS  = 30     # points used for centroid
+# ── LiDAR detection ──────────────────────────────────────────────────────────
+MIN_DETECT_DIST  = 0.15   # ignore cart body
+MAX_DETECT_DIST  = 6.0
+CLUSTER_POINTS   = 30
+FRONT_ARC_DEG    = 30.0   # front safety arc
 
-# ── UWB timeout (fall back to LiDAR-only if UWB silent) ──────────────────────
-UWB_TIMEOUT_SEC = 1.0
+# ── UWB timeout ───────────────────────────────────────────────────────────────
+UWB_TIMEOUT_SEC  = 1.0
 
 
 class FollowMeNode(Node):
@@ -67,32 +80,29 @@ class FollowMeNode(Node):
     def __init__(self):
         super().__init__('follow_me_node')
 
-        self._current_mode  = 'IDLE'
+        self._mode          = 'IDLE'
 
-        # UWB data
-        self._uwb_distance  = None
-        self._uwb_angle     = None
-        self._uwb_last_sec  = 0.0
-        self._uwb_available = False
+        # UWB
+        self._uwb_distances = None
+        self._uwb_last_t    = 0.0
 
-        # LiDAR data
-        self._lidar_angle   = None
-        self._lidar_dist    = None
+        # LiDAR
+        self._lidar_angle   = None   # angle to closest object
+        self._lidar_dist    = None   # distance to closest object
+        self._lidar_front   = None   # minimum distance in front arc
 
         # Subscriptions
         self.create_subscription(
-            String,    '/nav/current_mode', self._mode_cb,    10)
+            String,           '/nav/current_mode', self._mode_cb,    10)
         self.create_subscription(
-            Float32,   '/uwb/distance',     self._uwb_dist_cb, 10)
+            Float32MultiArray, '/uwb/distances',   self._uwb_cb,     10)
         self.create_subscription(
-            Float32,   '/uwb/angle',        self._uwb_angle_cb, 10)
-        self.create_subscription(
-            LaserScan, '/scan',             self._scan_cb,    10)
+            LaserScan,        '/scan',             self._scan_cb,    10)
 
         # Publisher
         self._cmd_pub = self.create_publisher(Twist, '/cmd_vel_raw', 10)
 
-        # Control loop timer – 20 Hz, steady clock
+        # Control loop 20Hz – steady clock
         self.create_timer(
             0.05,
             self._control_loop,
@@ -100,7 +110,7 @@ class FollowMeNode(Node):
                 clock_type=rclpy.clock.ClockType.STEADY_TIME))
 
         self.get_logger().info(
-            'Follow-Me Node started | UWB distance + LiDAR angle | '
+            'Follow-Me Node started | UWB trilateration + LiDAR angle | '
             'Press remote [2] to activate FOLLOW'
         )
 
@@ -109,127 +119,185 @@ class FollowMeNode(Node):
     # ══════════════════════════════════════════════════════════════════════════
     def _mode_cb(self, msg: String):
         new_mode = msg.data.strip().upper()
-        if new_mode != self._current_mode:
-            self._current_mode = new_mode
-            self.get_logger().info(f'Follow-Me mode → {self._current_mode}')
-            if self._current_mode != 'FOLLOW':
+        if new_mode != self._mode:
+            self._mode = new_mode
+            self.get_logger().info(f'Follow-Me: mode → {self._mode}')
+            if self._mode != 'FOLLOW':
                 self._cmd_pub.publish(Twist())
 
     # ══════════════════════════════════════════════════════════════════════════
-    # UWB CALLBACKS
+    # UWB CALLBACK
     # ══════════════════════════════════════════════════════════════════════════
-    def _uwb_dist_cb(self, msg: Float32):
-        self._uwb_distance = msg.data
-        import time
-        self._uwb_last_sec  = time.monotonic()
-        self._uwb_available = True
-
-    def _uwb_angle_cb(self, msg: Float32):
-        self._uwb_angle = msg.data
+    def _uwb_cb(self, msg: Float32MultiArray):
+        if len(msg.data) >= 4:
+            self._uwb_distances = np.array(msg.data[:4])
+            self._uwb_last_t    = time.monotonic()
 
     # ══════════════════════════════════════════════════════════════════════════
-    # LIDAR CALLBACK  –  360° closest cluster for angle refinement
+    # LIDAR CALLBACK  –  360° angle + front safety
     # ══════════════════════════════════════════════════════════════════════════
     def _scan_cb(self, msg: LaserScan):
-        angle_inc = msg.angle_increment
-        points = []
+        angle_inc    = msg.angle_increment
+        front_arc    = math.radians(FRONT_ARC_DEG)
+        min_front    = float('inf')
+        all_points   = []
 
         for i, r in enumerate(msg.ranges):
-            if math.isnan(r) or math.isinf(r):
+            if not math.isfinite(r):
                 continue
-            if r < MIN_DETECT_DIST or r > MAX_DETECT_DIST:
-                continue
+
             angle = msg.angle_min + i * angle_inc
-            x = r * math.cos(angle)
-            y = r * math.sin(angle)
-            points.append((x, y, r, angle))
 
-        if not points:
-            self._lidar_angle = None
+            # Front safety arc
+            if abs(angle) < front_arc:
+                if r < min_front:
+                    min_front = r
+
+            # All valid points for angle detection
+            if MIN_DETECT_DIST < r < MAX_DETECT_DIST:
+                x = r * math.cos(angle)
+                y = r * math.sin(angle)
+                all_points.append((x, y, r, angle))
+
+        # Front safety
+        self._lidar_front = min_front if min_front != float('inf') else None
+
+        # Closest cluster centroid for angle
+        if all_points:
+            all_points.sort(key=lambda p: p[2])
+            cluster = all_points[:CLUSTER_POINTS]
+            cx = sum(p[0] for p in cluster) / len(cluster)
+            cy = sum(p[1] for p in cluster) / len(cluster)
+            self._lidar_dist  = math.sqrt(cx * cx + cy * cy)
+            self._lidar_angle = math.atan2(cy, cx)
+        else:
             self._lidar_dist  = None
-            return
+            self._lidar_angle = None
 
-        # Closest cluster centroid
-        points.sort(key=lambda p: p[2])
-        cluster = points[:CLUSTER_POINTS]
+    # ══════════════════════════════════════════════════════════════════════════
+    # UWB TRILATERATION  –  least squares from cart centre
+    # ══════════════════════════════════════════════════════════════════════════
+    def _trilaterate(self, distances: np.ndarray):
+        """
+        Compute person XY position in cart body frame using
+        least-squares trilateration from 4 anchor distances.
+        Returns (x, y) or (None, None) on failure.
+        Distance is measured from cart centre (0, 0).
+        """
+        try:
+            # Build linear system using anchor 0 as reference
+            A = []
+            b = []
+            x0, y0 = ANCHORS[0]
+            d0      = distances[0]
 
-        cx = sum(p[0] for p in cluster) / len(cluster)
-        cy = sum(p[1] for p in cluster) / len(cluster)
+            for i in range(1, len(ANCHORS)):
+                xi, yi = ANCHORS[i]
+                di      = distances[i]
+                A.append([2.0 * (xi - x0), 2.0 * (yi - y0)])
+                b.append(d0**2 - di**2 - x0**2 + xi**2 - y0**2 + yi**2)
 
-        self._lidar_dist  = math.sqrt(cx * cx + cy * cy)
-        self._lidar_angle = math.atan2(cy, cx)
+            A = np.array(A, dtype=float)
+            b = np.array(b, dtype=float)
+
+            # Least squares solution
+            result = np.linalg.lstsq(A, b, rcond=None)
+            pos    = result[0]
+
+            return float(pos[0]), float(pos[1])
+
+        except Exception as e:
+            self.get_logger().warn(
+                f'Trilateration failed: {e}',
+                throttle_duration_sec=2.0)
+            return None, None
 
     # ══════════════════════════════════════════════════════════════════════════
     # MAIN CONTROL LOOP  –  20 Hz
     # ══════════════════════════════════════════════════════════════════════════
     def _control_loop(self):
 
-        # Gate – only run in FOLLOW mode
-        if self._current_mode != 'FOLLOW':
+        if self._mode != 'FOLLOW':
             return
 
         cmd = Twist()
 
-        # ── Check UWB availability ────────────────────────────────────────────
-        import time
+        # ── UWB availability check ────────────────────────────────────────────
         uwb_fresh = (
-            self._uwb_available and
-            (time.monotonic() - self._uwb_last_sec) < UWB_TIMEOUT_SEC
+            self._uwb_distances is not None and
+            (time.monotonic() - self._uwb_last_t) < UWB_TIMEOUT_SEC
         )
 
-        # ── Get distance ──────────────────────────────────────────────────────
-        # Priority: UWB (identity-locked) → LiDAR fallback
-        if uwb_fresh and self._uwb_distance is not None:
-            distance = self._uwb_distance
-            source   = 'UWB'
+        # ── Get distance from cart CENTRE ─────────────────────────────────────
+        if uwb_fresh:
+            # Trilaterate person XY in cart frame
+            px, py = self._trilaterate(self._uwb_distances)
+
+            if px is None:
+                # Trilateration failed – use LiDAR fallback
+                if self._lidar_dist is not None:
+                    distance = self._lidar_dist
+                    src_d    = 'LiDAR'
+                else:
+                    self._cmd_pub.publish(cmd)
+                    return
+            else:
+                # Distance from cart CENTRE (0,0) to trilaterated person position
+                distance = math.sqrt(px * px + py * py)
+                src_d    = 'UWB'
+
         elif self._lidar_dist is not None:
+            # UWB timed out – fall back to LiDAR
             distance = self._lidar_dist
-            source   = 'LiDAR'
+            src_d    = 'LiDAR'
         else:
-            # No data at all – stop
+            # No data
             self._cmd_pub.publish(cmd)
             self.get_logger().warn(
-                'No sensor data – cart stopped',
+                'No sensor data – stopping',
                 throttle_duration_sec=2.0)
             return
 
-        # ── Get angle ─────────────────────────────────────────────────────────
-        # Priority: LiDAR (more precise) → UWB fallback
+        # ── Get angle (LiDAR priority for precision) ──────────────────────────
         if self._lidar_angle is not None:
             angle  = self._lidar_angle
-            a_src  = 'LiDAR'
-        elif uwb_fresh and self._uwb_angle is not None:
-            angle  = self._uwb_angle
-            a_src  = 'UWB'
+            src_a  = 'LiDAR'
+        elif uwb_fresh and px is not None:
+            angle  = math.atan2(py, px)
+            src_a  = 'UWB'
         else:
             angle  = 0.0
-            a_src  = 'none'
+            src_a  = 'none'
 
-        # ── Linear control (UWB distance) ────────────────────────────────────
+        # ── Emergency stop – LiDAR front safety ──────────────────────────────
+        if (self._lidar_front is not None and
+                self._lidar_front < EMERGENCY_STOP_M):
+            self._cmd_pub.publish(Twist())   # full stop
+            self.get_logger().warn(
+                f'EMERGENCY STOP – obstacle at {self._lidar_front:.2f}m',
+                throttle_duration_sec=0.5)
+            return
+
+        # ── Linear control ────────────────────────────────────────────────────
         dist_error = distance - FOLLOW_DIST_M
 
         if dist_error > DEAD_ZONE_M:
-            # Too far – approach
             cmd.linear.x = min(MAX_LINEAR_VEL, KP_LINEAR * dist_error)
-
         elif dist_error < -DEAD_ZONE_M:
-            # Too close – back off
             cmd.linear.x = -BACKUP_SPEED
-
         else:
-            # In dead zone – stop linear
             cmd.linear.x = 0.0
 
-        # ── Angular control (LiDAR angle) ────────────────────────────────────
-        raw_angular   = -KP_ANGULAR * angle
+        # ── Angular control ───────────────────────────────────────────────────
+        raw_ang       = -KP_ANGULAR * angle
         cmd.angular.z = max(-MAX_ANGULAR_VEL,
-                            min(MAX_ANGULAR_VEL, raw_angular))
+                            min(MAX_ANGULAR_VEL, raw_ang))
 
         # ── Publish ───────────────────────────────────────────────────────────
         self._cmd_pub.publish(cmd)
 
         self.get_logger().info(
-            f'[{source}/{a_src}] dist={distance:.2f}m  '
+            f'[{src_d}/{src_a}] dist={distance:.2f}m  '
             f'angle={math.degrees(angle):.1f}°  '
             f'lin={cmd.linear.x:.2f}  ang={cmd.angular.z:.2f}',
             throttle_duration_sec=0.5
