@@ -25,6 +25,7 @@ setup(
             'obstacle_stop_node  = smart_cart_behaviour.obstacle_stop_node:main',
             'follow_me_node      = smart_cart_behaviour.follow_me_node:main',
             'teleop_person_node  = smart_cart_behaviour.teleop_person_node:main',
+            'cart_teleop_node  = smart_cart_behaviour.cart_teleop_node:main',
         ],
     },
 )

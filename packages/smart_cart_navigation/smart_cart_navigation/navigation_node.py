@@ -40,6 +40,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from rclpy.clock import ClockType
 import rclpy.clock
+from std_msgs.msg import String, Float32MultiArray
 
 
 MODE_IDLE   = 'IDLE'
@@ -83,6 +84,7 @@ class NavigationNode(Node):
         self.create_subscription(LaserScan, '/scan',         self._scan_cb,     10)
         self.create_subscription(Odometry,  '/odom',         self._odom_cb,     10)
         self.create_subscription(String,    '/nav/mode_cmd', self._mode_cmd_cb, 10)
+        self.create_subscription(Float32MultiArray, '/uwb/distances', self._uwb_nav_cb, 10)
 
         # ── Publishers ───────────────────────────────────────────────────
         self._mode_pub   = self.create_publisher(String, '/nav/current_mode', 10)
@@ -104,6 +106,15 @@ class NavigationNode(Node):
             f'Navigation Node ready | mode={self._mode} | '
             f'Press remote button [2] to start following'
         )
+    # ════════════════════════════════════════════════════════════════════
+    # SCAN CALLBACK  –  detect person presence with uwb
+    # ════════════════════════════════════════════════════════════════════
+    def _uwb_nav_cb(self, msg):
+        """Keep watchdog alive as long as UWB tag is visible."""
+        if len(msg.data) >= 4:
+            self._last_target_sec = self.get_clock().now().nanoseconds / 1e9
+            self._target_visible  = True
+
 
     # ════════════════════════════════════════════════════════════════════
     # SCAN CALLBACK  –  detect person presence in front arc

@@ -79,7 +79,7 @@ def generate_launch_description():
                     '-name', 'smart_cart',
                     '-topic', '/robot_description',
                     '-x', '0.0', '-y', '0.0', '-z', '0.20',
-                    '-R', '0.0', '-P', '0.0', '-Y', '0.0',
+                    '-R', '0.0', '-P', '0.0', '-Y', '0.0',  # face forward
                 ],
                 output='screen',
             ),
@@ -95,7 +95,7 @@ def generate_launch_description():
                 arguments=[
                     '-name', 'person',
                     '-file', person_sdf_file,
-                    '-x', '-2.0', '-y', '0.0', '-z', '0.12',
+                    '-x', '2.0', '-y', '0.0', '-z', '0.12',
                     '-R', '0.0', '-P', '0.0', '-Y', '0.0',
                 ],
                 output='screen',
@@ -157,6 +157,28 @@ def generate_launch_description():
                 output='screen',
                 parameters=[{'use_sim_time': False}],
             ),
+            
+            Node(
+                package='joint_state_publisher',
+                executable='joint_state_publisher',
+                name='joint_state_publisher',
+                output='screen',
+                parameters=[{'use_sim_time': False}],
+            ),
+
+            Node(
+                package='tf2_ros',
+                executable='static_transform_publisher',
+                name='person_odom_tf',
+                arguments=[
+                    '2.0', '0.0', '0.0',   # x y z translation (spawn position)
+                    '0.0', '0.0', '0.0',   # roll pitch yaw
+                    'odom',                 # parent frame
+                    'person_odom'           # child frame
+                ],
+                output='screen',
+            ),
+
         ]),
 
         # ── t=7  RViz2 ───────────────────────────────────────────────────
