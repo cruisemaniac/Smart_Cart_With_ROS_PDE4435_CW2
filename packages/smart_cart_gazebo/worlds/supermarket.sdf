@@ -8,8 +8,9 @@
   <world name="supermarket">
 
     <physics name="1ms" type="ignored">
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.004</max_step_size>
       <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>250</real_time_update_rate>
     </physics>
 
     <plugin filename="gz-sim-physics-system"        name="gz::sim::systems::Physics"/>
@@ -122,7 +123,7 @@
     </model>
 
     <!-- ── UWB beacon ring (visual only – marks person spawn point) ──────── -->
-    <model name="uwb_beacon">
+    <!-- <model name="uwb_beacon">
       <static>true</static><pose>1.5 0 0.0 0 0 0</pose>
 
       <link name="ring_outer">
@@ -171,7 +172,7 @@
           <transparency>0.4</transparency>
         </visual>
       </link>
-    </model>
+    </model> -->
 
   </world>
 </sdf>

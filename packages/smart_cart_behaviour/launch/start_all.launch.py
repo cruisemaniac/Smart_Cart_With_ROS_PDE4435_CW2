@@ -66,7 +66,7 @@ def generate_launch_description():
             name='robot_state_publisher',
             output='screen',
             parameters=[{'robot_description': robot_urdf,
-                         'use_sim_time': False}],
+                         'use_sim_time': True}],
         ),
 
         # ── t=3  Spawn smart cart ────────────────────────────────────────
@@ -79,7 +79,7 @@ def generate_launch_description():
                     '-name', 'smart_cart',
                     '-topic', '/robot_description',
                     '-x', '0.0', '-y', '0.0', '-z', '0.20',
-                    '-R', '0.0', '-P', '0.0', '-Y', '0.0',  # face forward
+                    '-R', '0.0', '-P', '0.0', '-Y', '3.14159',  # face forward
                 ],
                 output='screen',
             ),
@@ -96,7 +96,7 @@ def generate_launch_description():
                     '-name', 'person',
                     '-file', person_sdf_file,
                     '-x', '2.0', '-y', '0.0', '-z', '0.12',
-                    '-R', '0.0', '-P', '0.0', '-Y', '0.0',
+                    '-R', '0.0', '-P', '0.0', '-Y', '3.14159',  # face cart (180°)
                 ],
                 output='screen',
             ),
@@ -122,7 +122,7 @@ def generate_launch_description():
                 executable='obstacle_stop_node',
                 name='obstacle_stop_node',
                 output='screen',
-                parameters=[{'use_sim_time': False}],
+                parameters=[{'use_sim_time': True}],
             ),
 
             # Follow-Me (UWB distance + LiDAR angle)
@@ -131,7 +131,7 @@ def generate_launch_description():
                 executable='follow_me_node',
                 name='follow_me_node',
                 output='screen',
-                parameters=[{'use_sim_time': False}],
+                parameters=[{'use_sim_time': True}],
             ),
 
             # Navigation state machine
@@ -155,7 +155,7 @@ def generate_launch_description():
                 executable='uwb_simulator_node',
                 name='uwb_simulator_node',
                 output='screen',
-                parameters=[{'use_sim_time': False}],
+                parameters=[{'use_sim_time': True}],
             ),
             
             Node(
@@ -163,21 +163,21 @@ def generate_launch_description():
                 executable='joint_state_publisher',
                 name='joint_state_publisher',
                 output='screen',
-                parameters=[{'use_sim_time': False}],
+                parameters=[{'use_sim_time': True}],
             ),
 
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name='person_odom_tf',
-                arguments=[
-                    '2.0', '0.0', '0.0',   # x y z translation (spawn position)
-                    '0.0', '0.0', '0.0',   # roll pitch yaw
-                    'odom',                 # parent frame
-                    'person_odom'           # child frame
-                ],
-                output='screen',
-            ),
+            # Node(
+            #     package='tf2_ros',
+            #     executable='static_transform_publisher',
+            #     name='person_odom_tf',
+            #     arguments=[
+            #         '0.0', '0.0', '0.0',   # x y z translation (spawn position)
+            #         '0.0', '0.0', '0.0',   # roll pitch yaw
+            #         'odom',                 # parent frame
+            #         'person'           # child frame
+            #     ],
+            #     output='screen',
+            # ),
 
         ]),
 
@@ -188,7 +188,7 @@ def generate_launch_description():
                 output='screen',
                 arguments=['-d', rviz_config]
                     if os.path.exists(rviz_config) else [],
-                parameters=[{'use_sim_time': False}],
+                parameters=[{'use_sim_time': True}],
             ),
         ]),
 

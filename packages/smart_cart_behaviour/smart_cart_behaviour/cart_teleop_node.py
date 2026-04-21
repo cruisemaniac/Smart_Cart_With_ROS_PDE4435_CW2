@@ -86,8 +86,8 @@ class CartTeleopNode(Node):
 
     def send(self, lx=0.0, az=0.0):
         cmd           = Twist()
-        cmd.linear.x  = -lx
-        cmd.angular.z = -az
+        cmd.linear.x  = lx
+        cmd.angular.z = az
         self._pub.publish(cmd)
 
     def process_key(self, key):

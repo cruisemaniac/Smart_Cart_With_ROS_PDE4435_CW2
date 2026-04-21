@@ -160,6 +160,21 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /uwb/markers
       Value: true
+    - Class: rviz_default_plugins/Odometry
+      Enabled: true
+      Name: Person
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /person/odom
+      Keep: 1
+      Shape:
+        Alpha: 1
+        Axes Length: 0.5
+        Axes Radius: 0.05
+        Value: Axes
     - Class: rviz_default_plugins/TF
       Enabled: true
       Filter (blacklist): ""

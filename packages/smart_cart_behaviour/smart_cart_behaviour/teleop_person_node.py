@@ -107,13 +107,13 @@ class TeleopPersonNode(Node):
     def _key_to_twist(self, key: str):
         cmd = Twist()
         if key in ('w', '\x1b[A'):
-            cmd.linear.x = -self._linear_speed   # forward in Gazebo
+            cmd.linear.x = self._linear_speed   # forward in Gazebo
         elif key in ('s', '\x1b[B'):
-            cmd.linear.x =  self._linear_speed   # backward
+            cmd.linear.x =  -self._linear_speed   # backward
         elif key in ('a', '\x1b[D'):
-            cmd.angular.z = -self._angular_speed  # turn left
+            cmd.angular.z = self._angular_speed  # turn left
         elif key in ('d', '\x1b[C'):
-            cmd.angular.z =  self._angular_speed  # turn right
+            cmd.angular.z =  -self._angular_speed  # turn right
         elif key == ' ':
             pass   # zero twist = stop
         else:

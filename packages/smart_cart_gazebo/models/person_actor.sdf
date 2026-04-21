@@ -24,7 +24,7 @@
     <!-- MAIN BODY LINK  –  contains all visual geometry                  -->
     <!-- Origin at ground level z=0                                       -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
-    <link name="base_link">
+    <link name="person">
 
       <inertial>
         <pose>0 0 0.90 0 0 0</pose>
@@ -383,7 +383,7 @@
     <!-- JOINTS                                                            -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <joint name="left_wheel_joint" type="revolute">
-      <parent>base_link</parent>
+      <parent>person</parent>
       <child>left_wheel</child>
       <axis>
         <xyz>0 0 1</xyz>
@@ -393,7 +393,7 @@
     </joint>
 
     <joint name="right_wheel_joint" type="revolute">
-      <parent>base_link</parent>
+      <parent>person</parent>
       <child>right_wheel</child>
       <axis>
         <xyz>0 0 1</xyz>
@@ -403,12 +403,12 @@
     </joint>
 
     <joint name="caster_rear_joint" type="fixed">
-      <parent>base_link</parent>
+      <parent>person</parent>
       <child>caster_rear</child>
     </joint>
 
     <joint name="caster_front_joint" type="fixed">
-      <parent>base_link</parent>
+      <parent>person</parent>
       <child>caster_front</child>
     </joint>
 
@@ -417,8 +417,8 @@
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <plugin filename="gz-sim-diff-drive-system"
             name="gz::sim::systems::DiffDrive">
-      <left_joint>left_wheel_joint</left_joint>
-      <right_joint>right_wheel_joint</right_joint>
+      <left_joint>right_wheel_joint</left_joint>
+      <right_joint>left_wheel_joint</right_joint>
       <wheel_separation>0.50</wheel_separation>
       <wheel_radius>0.10</wheel_radius>
       <max_linear_velocity>1.5</max_linear_velocity>
@@ -427,8 +427,8 @@
       <odom_publish_frequency>20</odom_publish_frequency>
       <topic>person/cmd_vel</topic>
       <odom_topic>person/odom</odom_topic>
-      <tf_topic>person/tf</tf_topic>
-      <frame_id>person_odom</frame_id>
+      <tf_topic>/tf</tf_topic>
+      <frame_id>odom</frame_id>
       <child_frame_id>person</child_frame_id>
     </plugin>
 
