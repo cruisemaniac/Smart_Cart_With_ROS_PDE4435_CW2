@@ -30,7 +30,6 @@ cmake_minimum_required(VERSION 3.8)
 project(smart_cart_gazebo)
 
 find_package(ament_cmake REQUIRED)
-find_package(ros_gz_sim REQUIRED)
 
 # Install worlds, launch, config, and models directories
 install(DIRECTORY worlds launch config models

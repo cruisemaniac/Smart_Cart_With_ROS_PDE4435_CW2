@@ -11,6 +11,8 @@ Make sure you have the following installed before starting:
 - Ubuntu 24.04
 - ROS 2 Jazzy (full desktop install)
 - Gazebo Harmonic
+- Python 3 venv tooling
+- joint_state_publisher
 - Required ROS packages:
 
 ```bash
@@ -19,8 +21,11 @@ sudo apt install -y \
   ros-jazzy-ros-gz-sim \
   ros-jazzy-ros-gz-bridge \
   ros-jazzy-robot-state-publisher \
+  ros-jazzy-joint-state-publisher \
   ros-jazzy-xacro \
-  ros-jazzy-rviz2
+  ros-jazzy-rviz2 \
+  python3-venv \
+  python3-pip
 ```
 
 ```
@@ -114,12 +119,37 @@ source ~/.bashrc
 
 ---
 
-## Step 5 — Build the workspace
+## Step 5 — Set up the Python virtual environment
 
-From the workspace root:
+Create and activate a virtual environment outside the workspace, then install the Python requirements used by the Smart Cart nodes:
+
+```bash
+python3 -m venv --system-site-packages ~/.venvs/smart_cart_ros
+source ~/.venvs/smart_cart_ros/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+The root [requirements.txt](requirements.txt) currently includes the Python packages used by the repo-level Python code:
+
+```text
+numpy
+pytest
+```
+
+> **Note:** `xacro`, `launch`, `launch_ros`, and the other ROS imports are installed through ROS apt packages, not `requirements.txt`. The `--system-site-packages` flag lets the virtual environment see those ROS Python modules.
+
+> **Tip:** Keep the virtual environment outside the workspace tree so `colcon` does not try to inspect it during builds.
+
+---
+
+## Step 6 — Build the workspace
+
+From the workspace root, with the virtual environment active:
 
 ```bash
 cd ~/ros/jazzy_ws
+source ~/.venvs/smart_cart_ros/bin/activate
 colcon build
 ```
 
@@ -137,16 +167,22 @@ Finished <<< smart_cart_navigation [~1.3s]
 Summary: 4 packages finished
 ```
 
-If any package fails, check that all symlinks in Step 3 are correct.
+If any package fails, check that all symlinks in Step 3 are correct and that the virtual environment is active when you run `colcon build`.
 
 ---
 
-## Step 6 — Source the workspace
+## Step 7 — Source the workspace
 
 After building, source the workspace install:
 
 ```bash
 source ~/ros/jazzy_ws/install/setup.bash
+```
+
+If you used the virtual environment, reactivate it in any new terminal before launching:
+
+```bash
+source ~/.venvs/smart_cart_ros/bin/activate
 ```
 
 To do this automatically on every new terminal:
@@ -160,7 +196,7 @@ source ~/.bashrc
 
 ---
 
-## Step 7 — Launch the full simulation
+## Step 8 — Launch the full simulation
 
 ```bash
 ros2 launch smart_cart_behaviour start_all.launch.py
@@ -179,7 +215,7 @@ This single launch file starts everything in order:
 
 ---
 
-## Step 8 — Verify everything is running
+## Step 9 — Verify everything is running
 
 Open a new terminal and check nodes and topics:
 
@@ -207,13 +243,14 @@ ros2 topic list
 
 ---
 
-## Step 9 — Test the follow-me behaviour
+## Step 10 — Test the follow-me behaviour
 
 The cart uses LiDAR to detect the nearest object within a 60° front arc and follows it at 1.0 m distance. Since there is no person in the simulation by default, you need to spawn a target object.
 
 Open a **new terminal** and run:
 
 ```bash
+source ~/.venvs/smart_cart_ros/bin/activate
 source ~/ros/jazzy_ws/install/setup.bash
 
 ros2 run ros_gz_sim create \
@@ -249,7 +286,16 @@ ros2 topic echo /cmd_vel_raw
 → Check symlinks in `src/` are pointing to the right folders (Step 3).
 
 **`ros2 launch` says executable not found**
-→ You forgot to `source install/setup.bash` after building (Step 6).
+→ You forgot to `source install/setup.bash` after building (Step 7).
+
+**`ModuleNotFoundError: No module named 'xacro'`**
+→ Make sure ROS 2 Jazzy and `ros-jazzy-xacro` are installed, then source `/opt/ros/jazzy/setup.bash` before launching.
+
+**`pip` cannot find `numpy` or `pytest`**
+→ Activate the virtual environment and run `pip install -r requirements.txt` from the repository root.
+
+**`colcon build` starts scanning the virtual environment**
+→ Keep the venv outside the workspace tree as shown in Step 5.
 
 **Gazebo opens but robot is not visible**
 → Wait ~5 seconds for the spawn timer. If still missing, check `/robot_description` topic:
