@@ -1,65 +1,86 @@
-# ROS 2 Jazzy <--> Gazebo Harmonic topic bridge
-# Format: gz_topic_name @ ros_msg_type @ direction
-# [gz_to_ros] = Gazebo → ROS
-# [ros_to_gz] = ROS → Gazebo
-# [bidirectional] = both ways
+# ros_gz_bridge.yaml – ROS 2 Jazzy <-> Gazebo Harmonic
+# Fix: joint_states uses gz.msgs.Model_V which is NOT supported by
+# parameter_bridge. Removed it – robot_state_publisher handles TF.
+# Use /tf bridge instead for transforms.
 
+# ── Smart cart sensors ────────────────────────────────────────────────
 - ros_topic_name: /scan
-  gz_topic_name: /scan
-  ros_type_name: sensor_msgs/msg/LaserScan
-  gz_type_name: gz.msgs.LaserScan
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /camera/depth/image_raw
-  gz_topic_name: /camera/depth_image
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /camera/color/image_raw
-  gz_topic_name: /camera/image
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /camera/camera_info
-  gz_topic_name: /camera/camera_info
-  ros_type_name: sensor_msgs/msg/CameraInfo
-  gz_type_name: gz.msgs.CameraInfo
+  gz_topic_name:  /scan
+  ros_type_name:  sensor_msgs/msg/LaserScan
+  gz_type_name:   gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
 - ros_topic_name: /ultrasonic/left
-  gz_topic_name: /ultrasonic/left
-  ros_type_name: sensor_msgs/msg/LaserScan
-  gz_type_name: gz.msgs.LaserScan
+  gz_topic_name:  /ultrasonic/left
+  ros_type_name:  sensor_msgs/msg/LaserScan
+  gz_type_name:   gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
 - ros_topic_name: /ultrasonic/right
-  gz_topic_name: /ultrasonic/right
-  ros_type_name: sensor_msgs/msg/LaserScan
-  gz_type_name: gz.msgs.LaserScan
+  gz_topic_name:  /ultrasonic/right
+  ros_type_name:  sensor_msgs/msg/LaserScan
+  gz_type_name:   gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
+- ros_topic_name: /camera/color/image_raw
+  gz_topic_name:  /camera/image
+  ros_type_name:  sensor_msgs/msg/Image
+  gz_type_name:   gz.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/depth/image_raw
+  gz_topic_name:  /camera/depth_image
+  ros_type_name:  sensor_msgs/msg/Image
+  gz_type_name:   gz.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera_info
+  gz_topic_name:  /camera/camera_info
+  ros_type_name:  sensor_msgs/msg/CameraInfo
+  gz_type_name:   gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+
+# ── Smart cart odometry + TF ──────────────────────────────────────────
 - ros_topic_name: /odom
-  gz_topic_name: /odom
-  ros_type_name: nav_msgs/msg/Odometry
-  gz_type_name: gz.msgs.Odometry
+  gz_topic_name:  /odom
+  ros_type_name:  nav_msgs/msg/Odometry
+  gz_type_name:   gz.msgs.Odometry
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /tf
+  gz_topic_name:  /tf
+  ros_type_name:  tf2_msgs/msg/TFMessage
+  gz_type_name:   gz.msgs.Pose_V
+  direction: GZ_TO_ROS
+
+# ── Smart cart velocity command ───────────────────────────────────────
+- ros_topic_name: /cmd_vel
+  gz_topic_name:  /cmd_vel
+  ros_type_name:  geometry_msgs/msg/Twist
+  gz_type_name:   gz.msgs.Twist
+  direction: ROS_TO_GZ
+
+# ── Person actor (keyboard-controlled) ───────────────────────────────
+- ros_topic_name: /person/cmd_vel
+  gz_topic_name:  /person/cmd_vel
+  ros_type_name:  geometry_msgs/msg/Twist
+  gz_type_name:   gz.msgs.Twist
+  direction: ROS_TO_GZ
+
+- ros_topic_name: /person/odom
+  gz_topic_name:  /person/odom
+  ros_type_name:  nav_msgs/msg/Odometry
+  gz_type_name:   gz.msgs.Odometry
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /tf
+  gz_topic_name:  /person/tf
+  ros_type_name:  tf2_msgs/msg/TFMessage
+  gz_type_name:   gz.msgs.Pose_V
   direction: GZ_TO_ROS
 
 - ros_topic_name: /joint_states
-  gz_topic_name: /joint_states
-  ros_type_name: sensor_msgs/msg/JointState
-  gz_type_name: gz.msgs.Model
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /cmd_vel
-  gz_topic_name: /cmd_vel
-  ros_type_name: geometry_msgs/msg/Twist
-  gz_type_name: gz.msgs.Twist
-  direction: ROS_TO_GZ
-
-- ros_topic_name: /tf
-  gz_topic_name: /tf
-  ros_type_name: tf2_msgs/msg/TFMessage
-  gz_type_name: gz.msgs.Pose_V
+  gz_topic_name:  /joint_states  
+  ros_type_name:  sensor_msgs/msg/JointState
+  gz_type_name:   gz.msgs.Model
   direction: GZ_TO_ROS

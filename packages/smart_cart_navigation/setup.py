@@ -4,7 +4,7 @@ package_name = 'smart_cart_navigation'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -14,17 +14,16 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='jayashanka',
-    maintainer_email='jayashanka@todo.todo',
-    description='Navigation package for smart cart',
-    license='TODO: License declaration',
+    maintainer_email='jayasankaanushan199@gmail.com',
+    description='Navigation and UWB simulation for Smart Cart',
+    license='MIT',
     extras_require={
-        'test': [
-            'pytest',
-        ],
+        'test': ['pytest'],
     },
     entry_points={
         'console_scripts': [
-            'navigation_node = smart_cart_navigation.navigation_node:main',
+            'navigation_node     = smart_cart_navigation.navigation_node:main',
+            'uwb_simulator_node  = smart_cart_navigation.uwb_simulator_node:main',
         ],
     },
 )
