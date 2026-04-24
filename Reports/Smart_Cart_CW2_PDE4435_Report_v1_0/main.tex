@@ -1,0 +1,97 @@
+\documentclass[journal,twocolumn]{IEEEtran}
+
+% ─── Packages ────────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{soul}        
+\usepackage{microtype}
+\usepackage{cite}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+% Tighter list spacing to match IEEE style
+\setlist[itemize]{noitemsep, topsep=2pt, parsep=0pt, partopsep=0pt}
+\setlist[enumerate]{noitemsep, topsep=2pt, parsep=0pt, partopsep=0pt}
+
+% ─── Title & Authors ─────────────────────────────────────────────────────────
+\begin{document}
+
+\title{Robotic System Implementation Report for \\ AUTONOMOUS SMART CART}
+
+\author{
+  Ashwin Murali Thanalapati (M01037932),~
+  Mohammed Shalaby (M01035318),~
+  Jayashanka Anushan (M01037028),~
+  Vignesh Lakshmanasamy (M01026685)\\
+}
+
+\maketitle
+
+% ─── Abstract ────────────────────────────────────────────────────────────────
+\begin{abstract}
+This paper presents the design, implementation, and evaluation of an
+Autonomous Smart Cart system developed using ROS2 and Gazebo simulation.
+The system integrates a 2D LiDAR sensor with a follow-me behavior and
+obstacle avoidance controller, enabling a mobile robot platform to
+autonomously track a user within a simulated indoor retail environment.
+The ROS2 Navigation2 (Nav2) stack is used for path planning and
+localization, while Gazebo provides a physics-accurate simulation
+environment for testing and validation. Initial simulation results in Gazebo demonstrate successful follow-me 
+behavior and obstacle avoidance within a simulated indoor retail 
+environment. Full quantitative evaluation is ongoing; preliminary 
+findings and system architecture are presented in this draft report.
+\end{abstract}
+
+\IEEEpeerreviewmaketitle
+
+% ─── I. Introduction ─────────────────────────────────────────────────────────
+\input{sections/intro}
+
+% ─── II. Related Works ───────────────────────────────────────────────────────
+\input{sections/related_works}
+
+% ─── III. System Design ──────────────────────────────────────────────────────
+\input{sections/system_dewsign_and_simulation}
+
+% ─── IV. Non-Functional Requirements ─────────────────────────────────────────
+\input{sections/non_functional_requirements}
+
+% ─── V. Experiment results ─────────────────────────────────────────────────
+\input{sections/experimental_results}
+
+% ─── VI. Feasibility Analysis ─────────────────────────────────────────────────
+\input{sections/feasibility_analysis}
+
+% ─── VII. Testing Specifications ──────────────────────────────────────────────
+\input{sections/testing_specifications}
+
+% ─── VIII. Future Improvements ───────────────────────────────────────────────
+\input{sections/future_Improvements}
+
+% ─── Appendix D: Use of Generative AI ────────────────────────────────────────
+\appendix
+\input{sections/use_of_genAI}
+
+% ─── Appendix B: Design Thinking & Storyboard ────────────────────────────────
+\input{sections/design_thinking_n_storyboard}
+
+% ─── References ──────────────────────────────────────────────────────────────
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}

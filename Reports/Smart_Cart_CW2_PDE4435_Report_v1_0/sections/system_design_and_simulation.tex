@@ -1,0 +1,659 @@
+\section{System Design and Simulation Implementation}
+
+\subsection{System Overview}
+
+The Smart Cart Robot is an autonomous indoor assistive system designed
+to improve shopper safety and efficiency. It operates independently but
+relies on mall layout data for navigation and real-time sensing to detect
+obstacles, crowded areas, and user location. The robot interacts with
+users via visual and auditory feedback and is designed to complement
+traditional shopping carts, not replace them entirely. It is a
+self-contained system with integrated mobility, sensing, and control
+subsystems.
+
+The Smart Cart performs autonomous navigation, follow-me tracking, obstacle avoidance, and real-time user feedback within indoor retail environments.
+
+The Smart Cart system is designed to serve a broad range of shoppers in
+retail environments. Three distinct user classes have been identified,
+each with different interaction needs and system expectations.
+
+The system targets three user groups: general shoppers, elderly users, and parents with children. Each group requires different levels of automation, safety response, and interaction simplicity
+
+The Smart Cart Robot is intended for use in indoor retail environments
+such as malls or supermarkets. It is designed to operate on flat floors
+with occasionally mild ramps, in moderate lighting conditions, and among
+shoppers, carts, and shelves. It is optimized for environments with
+varying crowd densities and narrow aisles, where human safety and
+maneuverability are critical.
+
+\subsection{Robot Model}
+
+Design constraints for the Smart Cart Robot include:
+\begin{itemize}
+  \item Maximum cart width: 0.7\,m to navigate standard aisles
+  \item Maximum weight: 40\,kg including battery and electronics
+  \item Safety mechanisms to prevent collisions and injuries
+  \item Battery must provide 2--3 hours of continuous operation
+  \item Cost and materials suitable for scalable deployment
+  \item Limited integration with external IT or payment systems
+\end{itemize}
+
+The Smart Cart hardware integrates a layered architecture of sensing,
+actuation, power, and control subsystems. All components are mounted on
+or within the existing cart frame to minimize structural modifications.
+The Raspberry Pi 4B serves as the high-level processing unit running
+ROS~2, while the Arduino Mega handles real-time low-level motor control
+and sensor I/O.
+
+\subsection{System Architecture Overview}
+
+% Figure placeholder — replace filename with your actual image file
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\columnwidth]{images/image.png}
+  \caption{System Architecture Overview (Author Developed)}
+  \label{fig:sysarch}
+\end{figure}
+
+This diagram illustrates the \textbf{Autonomous Smart Cart System}
+architecture, divided into high-level intelligence and low-level
+execution systems.
+
+At the top tier, a \textbf{Raspberry Pi~4} serves as the system's
+``brain,'' running a \textbf{ROS~2 stack} to manage complex
+computational tasks like SLAM (Simultaneous Localization and Mapping),
+UWB-based positioning, and path planning for realizing movement. This
+high-level controller communicates via USB Serial with an
+\textbf{Arduino Mega}, which functions as the low-level ``nervous
+system.'' The Arduino is dedicated to real-time hardware interfacing,
+utilizing PWM signals to command a quad H-Bridge motor driver system and
+managing a diverse sensor suite including infrared, ultrasonic, and
+weight sensors through Serial UART protocol.
+
+Supporting this control structure is a robust physical and power
+foundation designed for mobility, safety and endurance. The drive system
+employs \textbf{four high-torque DC motors} paired with
+\textbf{omni-wheels} and encoders, enabling precise, multi-directional
+movement. The entire assembly is energized by a high-capacity
+\textbf{24\,V 20\,Ah LiPo battery}, which is regulated down to 5\,V
+and/or 3.3\,V to safely power the microelectronics. A dedicated Battery
+Management System (BMS) ensures electrical safety and longevity, creating
+a reliable hardware closed-loop that translates high-level navigation
+commands into smooth, physical locomotion.
+
+\subsection{Drive and Steering Mechanism}
+
+The cart employs four omnidirectional (omni) wheels driven by
+independent high-torque DC motors, enabling holonomic motion ---
+movement in any direction without requiring the cart to rotate first.
+This is critical for navigating narrow supermarket aisles and performing
+lateral parking maneuvers.
+
+\begin{table}[!ht]
+\caption{Drive System Specifications (Author developed)}
+\label{tab:drive}
+\centering
+\footnotesize
+\begin{tabular}{p{2.0cm} p{2.5cm} p{2.5cm}}
+\toprule
+\textbf{Component} & \textbf{Specification} & \textbf{Justification} \\
+\midrule
+Omni Wheels (x4) & Diameter: 150\,mm, Load: 15\,kg each & Holonomic motion; lateral movement in aisles \\
+DC Motors (x4) & 12\,V, 150\,RPM, 20\,kg$\cdot$cm torque & Sufficient torque for 40\,kg loaded cart \\
+Motor Driver & L298N Dual H-Bridge $\times$2 & PWM speed + direction control per motor \\
+Encoders & Quadrature, 500\,PPR & Closed-loop odometry for position tracking \\
+Max Speed & 1.2\,m/s (unconstrained) & Capped at 0.8\,m/s in software near humans \\
+Turning Radius & 0\,cm (in-place rotation) & Full holonomic capability via omni-wheels \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Mechanical Design Calculations}
+
+The mechanical design of the Smart Cart must ensure that the selected wheel and motor configuration is capable of moving the cart safely and reliably under expected operating conditions. 
+Mechanical feasibility is verified using rolling resistance and torque analysis.
+
+For the proposed design, the maximum operational cart mass is limited to \textbf{40\,kg}, including the cart structure, battery, electronics, and
+payload. Since the cart is intended for indoor use on smooth retail flooring, the dominant resistive force during motion is rolling resistance. For hard wheels operating on tiled or polished mall floors,
+a rolling resistance coefficient of approximately \textbf{0.02} can be assumed.
+
+The rolling resistance force is estimated using:
+\begin{equation}
+  F_r = \mu_r \times m \times g
+\end{equation}
+where $F_r$ is the rolling resistance force (N), $\mu_r$ is the rolling
+resistance coefficient, $m$ is the total cart mass (kg), and $g$ is
+gravitational acceleration $= 9.81\,\mathrm{m/s^2}$.
+
+Substituting the design values:
+\begin{equation}
+  F_r = 0.02 \times 40 \times 9.81 = 7.848\,\mathrm{N}
+\end{equation}
+
+Thus, the approximate force required to maintain motion on a flat indoor
+floor is \textbf{7.85\,N} under ideal rolling conditions.
+
+To determine the torque required at the wheel:
+\begin{equation}
+  T = F \times r
+\end{equation}
+where $T$ is torque (Nm), $F$ is the force at the wheel-ground interface
+(N), and $r$ is the wheel radius (m).
+
+The selected omni wheel diameter is \textbf{150\,mm}, giving a radius of:
+\begin{equation}
+  r = 75\,\mathrm{mm} = 0.075\,\mathrm{m}
+\end{equation}
+
+Therefore, the required wheel torque is:
+\begin{equation}
+  T = 7.848 \times 0.075 = 0.589\,\mathrm{Nm}
+\end{equation}
+
+The selected motor specification is \textbf{20\,kg$\cdot$cm torque}.
+Converting to SI units:
+\begin{equation}
+  20\,\mathrm{kg{\cdot}cm} = 20 \times 0.0981 = 1.962\,\mathrm{Nm}
+\end{equation}
+
+Hence, each selected motor is capable of delivering approximately
+\textbf{1.96\,Nm} torque. Since the required torque per wheel for
+steady-state motion is approximately \textbf{0.59\,Nm}, the motor
+provides more than three times the required torque under nominal
+conditions. This gives a sufficient design margin for additional
+real-world effects such as wheel slip, uneven flooring, transient
+acceleration, minor ramps, misalignment losses, and increased resistance
+when the cart starts moving from rest.
+
+The linear speed of the cart can also be checked using the selected motor
+speed of \textbf{150\,rpm}. The wheel circumference is:
+\begin{equation}
+  C = \pi D = \pi \times 0.15 = 0.471\,\mathrm{m}
+\end{equation}
+
+The theoretical linear speed is therefore:
+\begin{equation}
+  v = \frac{150 \times 0.471}{60} = 1.18\,\mathrm{m/s}
+\end{equation}
+
+This closely matches the system specification of approximately
+\textbf{1.2\,m/s maximum unconstrained speed}. However, in practical
+operation, software speed limiting reduces the cart speed to
+approximately \textbf{0.8\,m/s} near users to improve safety in
+human-populated indoor spaces.
+
+Overall, the calculations indicate that the selected wheel and motor
+combination is mechanically adequate for the intended payload and indoor
+operating environment.
+
+Omni wheels were selected to enable holonomic motion, allowing lateral movement and zero-radius turning. This improves navigation in narrow aisles and crowded environments compared to differential drive systems.
+
+\subsubsection{Mechanical System Diagram}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\columnwidth]{images/image.png}
+  \caption{Mechanical System Diagram (Author developed)}
+  \label{fig:mech}
+\end{figure}
+
+The mechanical system of the Smart Cart is based on a compact rectangular
+chassis supporting the shopping basket, battery system, sensor mounts,
+and control electronics. The load-bearing structure is designed to
+distribute mass evenly across four independently driven omni wheels
+located at the corners of the base frame. This arrangement provides both
+mechanical stability and holonomic mobility.
+
+A practical top-level mechanical layout is described as follows:
+\begin{itemize}
+  \item The \textbf{shopping basket} is mounted centrally above the chassis frame.
+  \item Four \textbf{150\,mm omni wheels} are mounted at the four corners of the base.
+  \item Each wheel is coupled to an independent \textbf{12\,V DC geared motor}.
+  \item The \textbf{battery pack} is placed near the lower centre of the chassis to reduce the centre of gravity.
+  \item The \textbf{motor drivers, Arduino Mega, and Raspberry Pi} are mounted in a protected electronics enclosure below or behind the basket.
+  \item \textbf{Ultrasonic sensors} are positioned on the front face of the cart for obstacle detection.
+  \item \textbf{IR proximity sensors} are mounted near the lower perimeter for foot-level and near-ground detection.
+  \item \textbf{Load cells} are integrated beneath the basket support structure, one near each corner, to monitor payload distribution and total load.
+  \item A \textbf{remote receiver / UWB anchors} are mounted around the cart frame to maintain robust user localisation performance.
+\end{itemize}
+
+From a structural perspective, the chassis acts as the main
+load-transferring member between the basket and the wheels. The wheelbase
+dimensions must remain compact enough to navigate aisles while still
+providing adequate resistance to tipping. The frame must also withstand
+static and dynamic loads generated during payload carrying, acceleration,
+deceleration, and emergency stopping.
+
+\subsubsection{Stability Analysis}
+Stability is ensured through low center of gravity, wide wheel placement, and speed limiting. The system reduces speed under high load and halts operation if tilt exceeds safety thresholds.
+
+\subsubsection{Braking and Mechanical Safety}
+The braking system uses controlled deceleration, motor braking, and hardware emergency cut-off. Speed limits and load-aware control ensure safe stopping distances in indoor environments.
+
+\subsection{Sensor System}
+\subsubsection{2D Lidar}
+
+A 2D Lidar (e.g., RPLIDAR A1) is mounted on the front-top of the chassis
+to provide a 360° horizontal scan of the environment. This allows the
+cart to detect obstacles beyond the narrow cone of ultrasonic sensors and
+facilitates SLAM (Simultaneous Localization and Mapping).
+
+\subsubsection{Depth Camera (Human Pose Estimation)}
+
+An RGB-D camera (e.g., Intel RealSense) is mounted on the handle assembly
+to provide 3D environmental data. Unlike the UWB which tracks the user,
+the camera is dedicated to Visual Odometry. By tracking ``features'' in
+the mall environment, it provides a secondary position estimate that
+prevents ``drifting'' in areas where UWB signals may experience multipath
+interference from metallic shelving.
+
+\subsubsection{UWB Positioning (Indoor Localization)}
+
+Four Ultra-Wideband (UWB) receiver anchor modules are mounted at the
+corners of the cart frame (RL, FL, RR, FR as shown in the design
+diagram). The user carries a UWB transmitter tag embedded in the handheld
+remote. Time-Difference-of-Arrival (TDoA) calculations between the
+anchors provide sub-30\,cm indoor positioning accuracy, enabling reliable
+follow-me tracking even when the user is briefly occluded. Power
+Management System.
+
+\textit{Note: In the Gazebo simulation, UWB positioning is replaced 
+by direct odometry from the avatar model. The avatar's 
+\texttt{/odom} topic serves as the ground-truth user position input 
+to the follow-me controller, replicating the role of UWB in the 
+physical design.}
+
+\subsubsection{Ultrasonic Obstacle Detection}
+
+Two HC-SR04 ultrasonic sensors are mounted on the front face of the cart
+basket at mid-height to detect obstacles --- including other shoppers,
+shelves, and stray items --- within a forward-facing cone. Readings are
+processed by Arduino and published to ROS~2 via serial bridge.
+
+\subsubsection{IR Sensors (Proximity / Edge Detection)}
+
+Infrared sensors are placed at the lower perimeter of the base platform
+(front and sides) to detect low-lying obstacles such as children's feet,
+bags on the floor, and kerb edges. IR sensors also function as a secondary
+proximity check at close range where ultrasonic sensors may have dead
+zones.
+
+\subsubsection{Weight Sensors (Load Monitoring)}
+
+Four load cell weight sensors are embedded beneath the basket floor, one
+at each corner. Total basket load is used to dynamically adjust motor
+torque limits and maximum speed --- heavier loads reduce maximum speed to
+maintain braking safety. A HX711 ADC module interfaces the load cells to
+the Arduino.
+
+\begin{table}[!ht]
+\centering
+\caption{Sensors used for robot model}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Sensor} & \textbf{Purpose} \\ \hline
+LiDAR & Mapping \& obstacle detection \\ \hline
+Depth Camera & Visual odometry \\ \hline
+UWB & User tracking \\ \hline
+Ultrasonic & Front obstacle detection \\ \hline
+IR & Low-level obstacle detection \\ \hline
+Load Cells & Weight-based speed control \\ \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{RGB LED Status Indicators}
+
+A strip of RGB LEDs is mounted along the top rail of the cart basket,
+visible at standing height. LEDs provide real-time status feedback to both
+the user and nearby shoppers without requiring audio in noise-sensitive
+environments.
+
+\begin{table}[!ht]
+\caption{RGB LED Status Color Coding (Author developed)}
+\label{tab:led}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{1.8cm} p{3.0cm}}
+\toprule
+\textbf{Color} & \textbf{State} & \textbf{Meaning} \\
+\midrule
+Green (slow pulse) & Following user & Normal follow-me operation \\
+Blue (solid) & Idle / Parked & Waiting for user command \\
+Yellow (flashing) & Obstacle detected & Slowing down, path adjusting \\
+Red (rapid flash) & Emergency stop & Obstacle $<$30\,cm, brakes applied \\
+White (solid) & Charging & Connected to charging station \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Handheld Remote Control}
+
+A compact handheld remote is provided to the user at the start of each
+shopping session. It contains the UWB transmitter tag for positioning and
+two physical buttons. The remote communicates with the cart's receiver
+module over the UWB link.
+
+\begin{table}[!ht]
+\caption{Handheld Remote Specifications (Author developed)}
+\label{tab:remote}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{2.0cm} p{2.8cm}}
+\toprule
+\textbf{Control} & \textbf{Function} & \textbf{Behavior} \\
+\midrule
+F (Follow) Button & Activate follow-me mode & Cart follows user at 0.8--1.0\,m distance \\
+X (Stop) Button & Emergency / manual stop & Immediately cuts motor power, brakes applied \\
+UWB Tag (embedded) & Real-time user location & Transmits position to 4 onboard anchors \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Power Management System}
+
+The cart is powered by a central 24\,V lithium polymer (LiPo) battery
+pack with a dedicated Battery Management System (BMS) for protection
+against over-discharge, overcharge, and thermal runaway. Step-down
+regulators supply stable 5\,V and 3.3\,V rails to the Raspberry Pi,
+Arduino, and sensors respectively.
+
+\begin{table}[!ht]
+\caption{Power Management System Specifications (Author developed)}
+\label{tab:power}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{2.2cm} p{2.6cm}}
+\toprule
+\textbf{Component} & \textbf{Specification} & \textbf{Purpose} \\
+\midrule
+Main Battery & 24\,V, 20\,Ah LiPo (480\,Wh) & Primary motor and electronics power \\
+BMS & 24\,V 30\,A balancing BMS & Cell balancing, over-current protection \\
+Buck Regulator 1 & 24\,V $\to$ 5\,V, 10\,A (XL4016) & Raspberry Pi 4B, USB devices \\
+Buck Regulator 2 & 5\,V $\to$ 3.3\,V, 3\,A (AMS1117) & Sensors and Arduino 3.3\,V peripherals \\
+Motor Power Rail & 24\,V direct (via BMS) & 4$\times$ DC motors via H-Bridge drivers \\
+Battery Life & $\sim$3 hours at avg load & Full shopping session requirement met \\
+Charge Connector & XT90 + CC/CV charger & Return-to-base charging protocol \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Safety and Fault Detection Mechanisms}
+
+Hardware-level safety mechanisms operate independently of the software
+stack to guarantee failsafe behavior even in the event of a software
+crash or sensor fault.
+
+\begin{table}[!ht]
+\caption{Hardware Safety and Fault Detection Mechanisms (Author developed)}
+\label{tab:safety}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{2.0cm} p{2.8cm}}
+\toprule
+\textbf{Safety Feature} & \textbf{Trigger Condition} & \textbf{Response} \\
+\midrule
+Hardware E-Stop & X button on remote & Direct relay cut to motor drivers \\
+Obstacle Brake & Ultrasonic $<$30\,cm & PWM zeroed, regenerative braking \\
+Watchdog Timer & Arduino no heartbeat ($>$500\,ms) & Motors disabled, LED red flash \\
+Battery Low & $<$20\% charge (BMS signal) & Speed limited to 50\%, audible beep \\
+Overload & Basket $>$40\,kg & Cart stops, user notified via LED \\
+Tilt/Fall Detection & IMU pitch/roll $>$15° & Motors disabled, alert triggered \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Software Overview}
+
+The Smart Cart software stack is built on ROS~2 (Humble Hawksbill) 
+and simulated within Gazebo. The architecture follows a modular 
+node-based design, where each functional subsystem is implemented 
+as an independent ROS~2 node communicating via a publish-subscribe 
+model.
+
+In the simulation, a unified teleop node serves dual purposes: WASD 
+keyboard input drives the user avatar model in Gazebo, while keys 
+\texttt{1}, \texttt{2}, and \texttt{3} simulate the handheld remote, 
+publishing \texttt{STOP}, \texttt{FOLLOW}, and \texttt{IDLE} commands 
+respectively to the \texttt{/remote\_cmd} topic. This design allows a 
+single operator to control both the person and the cart state during 
+testing, directly replicating the intended physical remote behavior 
+within simulation.
+
+\subsection{Layered ROS~2 Architecture}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\columnwidth]{images/image.png}
+  \caption{ROS~2 Node Communication Graph (Author Developed)}
+  \label{fig:rosgraph}
+\end{figure}
+
+\subsection{Gazebo Simulation Environment}
+
+The Smart Cart system is implemented and tested within a Gazebo 
+simulation environment replicating an indoor retail space. The 
+simulated world includes aisle structures, static shelf obstacles, 
+and a mobile user agent for follow-me validation.
+
+\subsubsection{Robot Model (URDF)}
+The cart is modeled as a differential-drive robot in URDF format,
+with the following key elements:
+\begin{itemize}
+  \item Base chassis link with inertial properties matching the 
+        physical design (40\,kg max)
+  \item Four wheel joints with continuous rotation
+  \item 2D LiDAR plugin (\texttt{libgazebo\_ros\_ray\_sensor}) 
+        mounted at chassis front-top
+  \item Differential drive plugin 
+        (\texttt{libgazebo\_ros\_diff\_drive}) for \texttt{/cmd\_vel} 
+        control
+\end{itemize}
+
+\subsubsection{Gazebo World Configuration}
+
+The simulated retail environment consists of:
+\begin{itemize}
+  \item Aisle width: 0.9\,m (matching Phase 3 test T3.5)
+  \item Static obstacles: shelf models placed at defined positions
+  \item A human avatar model representing the user, controlled 
+        via teleoperation using WASD keyboard commands
+  \item The cart robot spawned at a fixed origin; the user avatar 
+        spawned offset ahead of the cart
+  \item Spawn positions for cart and user defined in 
+        \texttt{world.launch.py}
+\end{itemize}
+
+\subsubsection{ROS2 Node Graph}
+The system is implemented in ROS 2 using modular nodes for perception, localization, and control. Communication between Raspberry Pi and Arduino is handled via a serial bridge for real-time actuation.
+
+The active ROS2 nodes during simulation include:
+\begin{itemize}
+  \item \texttt{/gazebo} --- physics simulation, sensor publishing, 
+        and avatar/cart model hosting
+  \item \texttt{/robot\_state\_publisher} --- URDF transforms for 
+        cart and user avatar
+  \item \texttt{/teleop\_node} --- unified keyboard input node; 
+        WASD controls user avatar movement; keys 1, 2, 3 send 
+        remote commands (Stop, Follow, Idle) to the cart
+  \item \texttt{/follow\_me\_controller} --- subscribes to avatar 
+        pose and publishes \texttt{/cmd\_vel} to cart when in 
+        Follow mode
+  \item \texttt{/obstacle\_detector} --- LiDAR-based proximity 
+        zone classifier
+  \item \texttt{/rviz2} --- real-time visualization of LiDAR scan, 
+        cart pose, and avatar position
+\end{itemize}
+
+A single teleop command node handles both avatar locomotion and 
+remote button simulation. WASD keystrokes are published to the 
+avatar's velocity topic, while keys \texttt{1}, \texttt{2}, and 
+\texttt{3} publish mode commands (\texttt{STOP}, \texttt{FOLLOW}, 
+\texttt{IDLE}) to the \texttt{/remote\_cmd} topic, which the 
+follow-me controller subscribes to.
+
+\begin{figure}[!ht]
+  \centering
+  % Replace with actual rqt_graph screenshot
+  \includegraphics[width=0.85\columnwidth]{images/image.png}
+  \vspace{1cm}
+  \caption{ROS2 Node Communication Graph from Gazebo Simulation 
+           (To be updated)}
+  \label{fig:rosgraph_sim}
+\end{figure}
+
+\subsection{Localization Subsystem}
+
+The localization architecture employs a multi-stage sensor fusion approach
+to maintain high-precision positioning in dynamic retail environments. At
+the core is the \texttt{ekf\_localization} node, which utilizes an
+Extended Kalman Filter (EKF) to fuse four distinct data streams: Wheel
+Odometry (relative motion from encoders), UWB TDoA (absolute
+user-relative positioning), Visual Odometry (relative motion from the
+depth camera), and LiDAR-based Scan Matching (spatial alignment). This
+``quad-redundancy'' ensures the cart maintains a pose estimate accurate
+within 5\,cm, even if individual sensor streams---such as the camera's
+view or UWB signals---become noisy due to crowding or metallic
+interference.
+
+The process begins with the \texttt{uwb\_localisation} node, which
+computes the user's 2D position relative to the cart using a weighted
+least-squares multilateration algorithm from four DWM1000 anchors.
+Simultaneously, the 2D LiDAR provides a 360° scan of the environment at
+8000\,samples/s, allowing the \texttt{slam\_toolbox} or
+\texttt{cartographer} node to match the current scan against a stored
+mall map to provide a global position correction. The Depth Camera
+provides high-frequency visual odometry to fill in gaps between LiDAR
+updates. Finally, the EKF ingests the \texttt{/user\_pose},
+\texttt{/scan\_match}, and \texttt{/camera/odom} updates alongside raw
+wheel odometry to produce a smooth, low-latency pose estimate published
+on the \texttt{/ekf\_pose} topic.
+
+\begin{table}[!ht]
+\caption{Localization Subsystem ROS~2 Topics (Author developed)}
+\label{tab:localization}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{2.5cm} p{2.5cm}}
+\toprule
+\textbf{ROS~2 Topic / Service} & \textbf{Message Type} & \textbf{Description} \\
+\midrule
+\texttt{/user\_pose} & \texttt{geometry\_msgs/ PoseStamped} & User position relative to cart \\
+\texttt{/uwb\_raw} & \texttt{sensor\_msgs/ Range} & Raw range from each anchor \\
+\texttt{/odom} & \texttt{nav\_msgs/ Odometry} & Wheel encoder odometry \\
+\texttt{/ekf\_pose} & \texttt{geometry\_msgs/ PoseWithCovariance} & EKF-fused pose estimate \\
+\texttt{/scan} & \texttt{sensor\_msgs/ LaserScan} & 2D LiDAR data for mapping \\
+\texttt{/camera/odom} & \texttt{nav\_msgs/ Odometry} & Visual odometry for positioning \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Obstacle Detection and Human Tracking}
+
+The perception node implements a multi-modal approach by fusing data from
+the 2D LiDAR, Depth Camera, Ultrasonic, and IR sensors. The 2D LiDAR
+provides a high-resolution \texttt{/scan} topic used for long-range (up
+to 12\,m) obstacle mapping and detection of static objects like shelves.
+The Depth Camera identifies dynamic obstacles and filters out ``noise''
+(such as overhead signage) by focusing on the 3D space directly in the
+cart's path.
+
+Obstacles are classified by proximity zones: WARNING (0.5--1.0\,m), SLOW
+(0.3--0.5\,m), and STOP ($<$0.3\,m). While LiDAR and Camera handle primary
+detection, the ultrasonic and IR sensors act as a safety ``short-range''
+layer to detect transparent objects or low-lying obstacles (e.g., shopper
+feet) in sensor blind spots. The node publishes a consolidated
+\texttt{ObstacleAlert} message to the path planner.
+
+\begin{table}[!ht]
+\caption{Obstacle Proximity Zones and Cart Responses (Author developed)}
+\label{tab:zones}
+\centering
+\footnotesize
+\begin{tabular}{p{1.2cm} p{1.8cm} p{3.6cm}}
+\toprule
+\textbf{Zone} & \textbf{Distance} & \textbf{Behavior} \\
+\midrule
+CLEAR   & $>$1.0\,m        & Normal following speed (0.8\,m/s) \\
+WARNING & 0.5 -- 1.0\,m   & Speed reduced to 0.4\,m/s, yellow LED \\
+SLOW    & 0.3 -- 0.5\,m   & Speed reduced to 0.2\,m/s, path re-route \\
+STOP    & $<$0.3\,m        & Emergency brake, red LED, hold position \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Path Planning and Follow-Me Controller}
+
+The path planner implements a Dynamic Window Approach (DWA) local planner
+that operates on a costmap generated by the LiDAR and Depth Camera. This
+allows the cart to calculate feasible velocity trajectories that
+proactively steer around obstacles rather than simply stopping.
+
+The follow-me controller uses a Proportional-Derivative (PD) control law
+based on the \texttt{/ekf\_pose} which, as defined in Section~III-H, is
+stabilized by Visual Odometry and LiDAR scan-matching. The target
+following offset is maintained at 0.8\,m behind the user. By utilizing
+the LiDAR-based costmap, the cart can perform smooth ``re-routing''
+maneuvers in narrow aisles (e.g., 0.9\,m width) without losing track of
+the user or colliding with shelves.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\columnwidth]{images/image.png}
+  \caption{Follow-Me Path Planning Control Loop (Author developed)}
+  \label{fig:followme}
+\end{figure}
+
+\subsection{Arduino--Raspberry Pi Communication Bridge}
+
+The Arduino Mega runs dedicated firmware that handles all real-time sensor
+sampling and motor PWM generation. It communicates with the Raspberry Pi
+over USB serial at 115200\,baud using a lightweight custom binary
+protocol. The \texttt{sensor\_bridge} ROS~2 node on the Raspberry Pi
+handles serial parsing and publishes all sensor data to appropriate
+topics. A 500\,ms watchdog timer on the Arduino will cut motor power if
+no heartbeat is received from the Raspberry Pi, preventing runaway
+behavior during software crashes.
+
+\begin{table}[!ht]
+\caption{Arduino--Raspberry Pi Serial Communication Protocol (Author developed)}
+\label{tab:serial}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{1.6cm} p{1.3cm} p{2.0cm}}
+\toprule
+\textbf{Message Type} & \textbf{Direction} & \textbf{Frequency} & \textbf{Content} \\
+\midrule
+SENSOR\_DATA & Arduino $\to$ RPi & 50\,Hz & Ultrasonic, IR, weight, encoder vals \\
+MOTOR\_CMD   & RPi $\to$ Arduino & 50\,Hz & PWM duty cycle for 4 motors \\
+LED\_CMD     & RPi $\to$ Arduino & 5\,Hz  & RGB colour and blink pattern \\
+HEARTBEAT    & RPi $\to$ Arduino & 10\,Hz & Watchdog keepalive signal \\
+STATUS\_ACK  & Arduino $\to$ RPi & 10\,Hz & Fault flags, battery level \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{End-to-End Operational Flowchart}
+
+The following flowchart shows the complete operational logic of the Smart
+Cart from power-on through to session end. It covers normal follow-me
+operation, obstacle avoidance decision-making, load-based speed
+adaptation, and emergency stopping.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.85\columnwidth]{images/image.png}
+  \caption{Smart Cart Operational Flowchart (Author Developed)}
+  \label{fig:flowchart}
+\end{figure}
+
+\subsection{Assumptions and Dependencies}
+
+Assumptions and dependencies for the Smart Cart Robot include:
+\begin{itemize}
+  \item Mall layout maps are available and accurate for navigation.
+  \item Floors are smooth with minor slopes only.
+  \item Users are able and willing to interact with the cart as instructed.
+  \item Simulated sensors and actuators in Gazebo approximate real hardware behavior within acceptable tolerances.
+  \item Gazebo physics parameters are tuned to reflect indoor retail floor conditions.
+\end{itemize}
+
