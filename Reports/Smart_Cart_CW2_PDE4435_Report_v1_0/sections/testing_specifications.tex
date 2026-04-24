@@ -1,0 +1,126 @@
+\section{Testing Specifications}
+
+Testing is structured in four progressive phases, from unit-level hardware
+verification through to full-scenario integration tests in a simulated
+retail environment. Each test specifies acceptance criteria that must be
+passed before progressing to the next phase.
+
+\subsection{Phase 1 --- Component Unit Tests}
+
+\begin{table}[!ht]
+\caption{Phase 1 --- Component Unit Tests (Author developed)}
+\label{tab:phase1}
+\centering
+\footnotesize
+\begin{tabular}{p{0.6cm} p{1.8cm} p{1.8cm} p{2.4cm}}
+\toprule
+\textbf{ID} & \textbf{Description} & \textbf{Method} & \textbf{Acceptance Criteria} \\
+\midrule
+T1.1 & UWB anchor ranging accuracy & Static tag at known positions (1\,m, 2\,m, 5\,m) & Error $<\pm$30\,cm at all ranges \\
+T1.2 & Ultrasonic distance accuracy & Target board at 0.3, 0.5, 1.0, 2.0\,m & Error $<\pm$3\,cm; latency $<$25\,ms \\
+T1.3 & IR sensor low-obstacle detection & Obstacle at 10, 40, 80\,cm floor level & Detected at all ranges within spec \\
+T1.4 & Weight sensor calibration & Known masses: 0, 5, 10, 20, 40\,kg & Error $<\pm$200\,g across range \\
+T1.5 & Motor direction and speed & PWM sweep 0--100\% all 4 motors & No stall; encoder counts consistent \\
+T1.6 & Emergency stop response time & Remote X button press to motor stop & Full stop within 200\,ms \\
+T1.7 & LiDAR 360° FoV Check & Place cart in clear area and observe ROS~2 \texttt{/scan} topic while rotating; verify basket frame occlusion & No blind spots or data gaps; static chassis frame must be filtered out \\
+T1.8 & Camera Visual Odometry (VO) drift & Move cart using only camera with encoder disabled & Camera-based movement must have minimal drift ($<$10--15\,cm) over measured distance \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phase 2 --- Subsystem Integration Tests}
+
+\begin{table}[!ht]
+\caption{Phase 2 --- Subsystem Integration Tests (Author developed)}
+\label{tab:phase2}
+\centering
+\footnotesize
+\begin{tabular}{p{0.6cm} p{1.8cm} p{1.8cm} p{2.4cm}}
+\toprule
+\textbf{ID} & \textbf{Description} & \textbf{Method} & \textbf{Acceptance Criteria} \\
+\midrule
+T2.1 & ROS~2 topic publish rates & \texttt{ros2 topic hz} monitoring all nodes & All critical topics $>$40\,Hz \\
+T2.2 & Serial bridge latency & Timestamp sensor data vs.\ ROS topic & End-to-end latency $<$30\,ms \\
+T2.3 & EKF pose fusion stability & Walk user around cart perimeter 3$\times$ & No pose jumps $>$20\,cm; smooth trajectory \\
+T2.4 & Obstacle zone classification & Approach cart with obstacle at varying speeds & Correct zone output at all thresholds \\
+T2.5 & Speed adaptation to load & Test at 0, 10, 20, 40\,kg basket load & Speed reduces proportionally rules \\
+T2.6 & Watchdog timer fault & Kill RPi process; observe Arduino & Motor cut within 500\,ms; red LED flash \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phase 3 --- Autonomous Navigation Tests}
+
+\begin{table}[!ht]
+\caption{Phase 3 --- Autonomous Navigation Tests (Author developed)}
+\label{tab:phase3}
+\centering
+\footnotesize
+\begin{tabular}{p{0.6cm} p{1.8cm} p{1.8cm} p{2.4cm}}
+\toprule
+\textbf{ID} & \textbf{Description} & \textbf{Method} & \textbf{Acceptance Criteria} \\
+\midrule
+T3.1 & Follow-me straight line & User walks 10\,m corridor; cart follows & Cart maintains 0.8\,m $\pm$ 0.2\,m following distance \\
+T3.2 & Follow-me with turns & User makes 90° left and right turns & Cart completes turn within 1.5\,s with no collision \\
+T3.3 & Obstacle avoidance --- static & Static box placed in cart path mid-follow & Cart re-routes without stopping $>$2\,s \\
+T3.4 & Obstacle avoidance --- dynamic & Person walks across cart path at 1.0\,m/s & No contact; recovery to follow-path within 3\,s \\
+T3.5 & Narrow aisle navigation & Aisle width of 0.9\,m (cart is 0.7\,m wide) & Cart passes without wall contact \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phase 4 --- Full Scenario / Performance Tests}
+
+\begin{table}[!ht]
+\caption{Phase 4 --- Full Scenario Performance Tests (Author developed)}
+\label{tab:phase4}
+\centering
+\footnotesize
+\begin{tabular}{p{0.6cm} p{1.8cm} p{1.8cm} p{2.4cm}}
+\toprule
+\textbf{ID} & \textbf{Description} & \textbf{Method} & \textbf{Acceptance Criteria} \\
+\midrule
+T4.1 & Full 2-hour battery endurance & Continuous operation, avg 0.5\,m/s, 15\,kg load & Battery $>$20\% at 2 hours; no fault interrupts \\
+T4.2 & Simulated shopping route & User completes 20-min mall route with stops & $\geq$95\% successful follow-me engagement time \\
+T4.3 & Crowded environment (10 people) & 10 actors walking in simulated mall space & Zero collisions; $\leq$3 emergency stops triggered \\
+T4.4 & User stop-and-shop behaviour & User pauses for 30\,s, resumes walking & Cart holds position; resumes follow-me within 1\,s \\
+T4.5 & Repeated E-Stop recovery & 10$\times$ stop/resume cycles in 5 minutes & All recoveries successful; no system fault logged \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─── VII. Risk Assessment ────────────────────────────────────────────────────
+\section{Risk Assessment}
+
+The following risk register identifies key technical, operational, and
+safety risks associated with the Smart Cart system, along with their
+likelihood, severity, and proposed mitigation strategies.
+
+\begin{table}[!ht]
+\caption{Risk Register --- Smart Cart System (Author developed)}
+\label{tab:risk}
+\centering
+\footnotesize
+\begin{tabular}{p{1.5cm} p{0.8cm} p{0.8cm} p{0.8cm} p{2.5cm}}
+\toprule
+\textbf{Risk} & \textbf{Like.} & \textbf{Sev.} & \textbf{Level} & \textbf{Mitigation} \\
+\midrule
+UWB multipath errors in metallic shelving & Med & High & HIGH & Deploy 4-anchor array; use EKF smoothing; test in representative environment \\
+Cart collides with shopper leg or heel & Low & High & HIGH & Multi-zone obstacle detection; hardware E-stop relay; speed limits enforced in software \\
+Battery depletion mid-session & Low & Med & MEDIUM & BMS low-battery alert at 20\%; geofenced return-to-base at 15\% \\
+RPi thermal throttle under load & Med & Med & MEDIUM & Heatsink + 5\,V fan on RPi; monitor CPU temp via ROS~2 diagnostics node \\
+Serial communication dropout between RPi and Arduino & Low & High & HIGH & Watchdog timer on Arduino; automatic re-connect in \texttt{sensor\_bridge} node \\
+User walks faster than cart max speed & Med & Low & LOW & Cart switches to stationary follow mode; user notified via LED; max speed can be tuned \\
+Children or pets triggering false obstacle stops & High & Low & MEDIUM & IR sensor height calibrated to ignore floor-level noise; adjustable stop thresholds \\
+Cart remote lost or stolen & Med & Med & MEDIUM & Bluetooth pairing lock; remote-loss timeout (60\,s idle $\to$ auto park mode) \\
+Omni-wheel performance on wet floors & Low & Med & MEDIUM & Speed reduction on incline (IMU); non-slip wheel treads; wet-floor warning in store policy \\
+ROS~2 node crash causing uncontrolled motion & Low & High & HIGH & Watchdog timer; hardware relay E-stop; all motor commands time out if no update $>$300\,ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Risk levels are assessed using a standard 3$\times$3
+likelihood-severity matrix. HIGH risks require mandatory mitigation prior
+to deployment testing. MEDIUM risks require mitigation prior to full
+public operation. LOW risks are monitored and reviewed at each testing
+phase.

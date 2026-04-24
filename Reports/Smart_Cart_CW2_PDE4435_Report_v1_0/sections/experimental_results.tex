@@ -1,0 +1,55 @@
+\section{Experimental Results}
+
+\textit{This section is currently a draft. Simulation trials are 
+ongoing and quantitative results will be finalized before submission.}
+
+\subsection{Simulation Setup}
+All experiments were conducted in Gazebo (version 11) with ROS2 
+Humble. The simulated environment replicates a single retail aisle 
+of 0.9\,m width and 10\,m length, with two static shelf obstacles 
+and one dynamic pedestrian actor.
+
+\subsection{Follow-Me Performance}
+\textit{[DRAFT --- Data collection in progress.]}
+
+Preliminary trials indicate the cart successfully maintains the 
+target following distance of $0.8 \pm 0.2$\,m during straight-line 
+tracking. Turn-following behavior is under evaluation.
+
+\begin{table}[!ht]
+\caption{Preliminary Follow-Me Results --- Gazebo Simulation 
+         (Draft --- values to be confirmed)}
+\label{tab:results_followme}
+\centering
+\footnotesize
+\begin{tabular}{p{3.0cm} p{1.5cm} p{2.0cm}}
+\toprule
+\textbf{Test Scenario} & \textbf{Trials} & \textbf{Result} \\
+\midrule
+Straight-line follow (10\,m) & 5 & \textit{[pending]} \\
+90° turn following           & 5 & \textit{[pending]} \\
+Stop-and-resume behavior     & 5 & \textit{[pending]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Obstacle Avoidance Performance}
+\textit{[DRAFT --- Data collection in progress.]}
+
+\begin{table}[!ht]
+\caption{Preliminary Obstacle Avoidance Results --- Gazebo Simulation 
+         (Draft --- values to be confirmed)}
+\label{tab:results_obs}
+\centering
+\footnotesize
+\begin{tabular}{p{3.0cm} p{1.5cm} p{2.0cm}}
+\toprule
+\textbf{Obstacle Type} & \textbf{Trials} & \textbf{Success Rate} \\
+\midrule
+Static shelf obstacle  & 10 & \textit{[pending]} \\
+Dynamic pedestrian     & 10 & \textit{[pending]} \\
+Narrow aisle (0.9\,m) & 5  & \textit{[pending]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+

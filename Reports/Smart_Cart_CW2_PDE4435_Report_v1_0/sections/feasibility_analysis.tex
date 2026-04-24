@@ -1,0 +1,82 @@
+\subsection{Technical Feasibility}
+
+All core technologies employed in the Smart Cart system are commercially
+available, well-documented, and have been demonstrated in comparable
+robotics research applications. The Raspberry Pi 4B running ROS~2 is a
+proven platform for mobile robotics. UWB-based indoor positioning achieves
+sub-30\,cm accuracy in retail-like environments, as documented in recent
+literature. Omni-wheel holonomic platforms are a mature technology used
+extensively in service robots. The primary technical risks are UWB
+multipath interference in highly metallic shelf environments and real-time
+control latency over the Arduino-to-RPi serial bridge --- both of which
+have well-known mitigation strategies (antenna diversity and DMA serial
+respectively).
+
+\subsection{Economic Feasibility}
+
+The following table provides a component-level bill of materials (BOM)
+with estimated unit costs for a single prototype unit. Costs are based on
+current retail pricing from distributor catalogues (RS Components, Mouser,
+Amazon UK) as of 2025.
+
+\begin{table}[!ht]
+\caption{Bill of Materials --- Single Prototype Unit (Author developed)}
+\label{tab:bom}
+\centering
+\footnotesize
+\begin{tabular}{p{2.5cm} c r r p{1.3cm}}
+\toprule
+\textbf{Component} & \textbf{Qty} & \textbf{Unit (£)} & \textbf{Total (£)} & \textbf{Source} \\
+\midrule
+Raspberry Pi 4B (4GB) & 1 & 55 & 55 & RS Components \\
+Arduino Mega 2560 & 1 & 38 & 38 & Arduino Official \\
+DWM1000 UWB Module & 5 & 18 & 90 & Mouser \\
+DC Motor + Omni Wheel Set & 4 & 22 & 88 & RobotShop \\
+L298N Dual H-Bridge Driver & 2 & 8 & 16 & Amazon UK \\
+HC-SR04 Ultrasonic Sensor & 2 & 4 & 8 & Amazon UK \\
+Sharp IR Distance Sensor & 4 & 9 & 36 & RS Components \\
+50kg Bar Load Cell + HX711 & 4 & 7 & 28 & Amazon UK \\
+24V 20Ah LiPo Battery + BMS & 1 & 95 & 95 & Hobbyking \\
+Buck Regulators (XL4016) & 2 & 6 & 12 & Amazon UK \\
+RGB LED Strip (WS2812B) & 1 & 12 & 12 & Amazon UK \\
+Remote PCB + Buttons + Case & 1 & 25 & 25 & Custom \\
+Frame Mounts + Wiring + Misc & 1 & 40 & 40 & Various \\
+\midrule
+\textbf{TOTAL PROTOTYPE COST} & & & \textbf{£543} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For context, a standard commercial shopping cart costs approximately
+£80--£150. The Smart Cart prototype at £543 represents a $\sim$4$\times$
+cost multiplier for a single unit. At scale (500+ units), electronics
+costs reduce significantly through bulk purchasing and custom PCB
+fabrication, with an estimated production cost of £280--£320 per unit.
+Given the operational benefits --- reduced staff assistance needs, reduced
+cart damage, and improved shopper retention --- a payback period of 18--24
+months is estimated for large-format retail deployments.
+
+\subsection{Environmental Feasibility}
+
+The system is designed for operation exclusively within controlled indoor
+retail environments. Key environmental constraints and their mitigations
+are summarized below:
+
+\begin{table}[!ht]
+\caption{Environmental Feasibility Assessment (Author developed)}
+\label{tab:envfeas}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{2.0cm} p{2.8cm}}
+\toprule
+\textbf{Environmental Factor} & \textbf{Constraint} & \textbf{Mitigation} \\
+\midrule
+Floor Surface & Smooth, level (max 3° ramp) & Omni-wheels handle minor slopes; ramp detection via IMU \\
+Lighting & Moderate indoor ($>$200\,lux) & UWB and ultrasonic are light-independent \\
+Crowd Density & Up to 2 people/m² & DWA planner with conservative speed limits \\
+RF Interference & Dense WiFi / BLE environment & UWB at 3.5--6.5\,GHz; minimal overlap with WiFi \\
+Temperature & 15--30°C standard retail & All components rated for 0--70°C operation \\
+\bottomrule
+\end{tabular}
+\end{table}
+

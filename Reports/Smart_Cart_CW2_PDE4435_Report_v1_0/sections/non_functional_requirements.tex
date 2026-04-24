@@ -1,0 +1,90 @@
+\section{Non-Functional Requirements}
+
+Non-functional requirements define the quality standards and operational
+constraints the Smart Cart system must meet --- not what it does, but how
+well it does it. These requirements directly influence the user experience,
+safety, and deployment viability of the system.
+
+\subsection{Performance Requirements}
+
+The system must meet the following performance thresholds to function
+safely and usefully in a real retail environment:
+
+\begin{table}[!ht]
+\caption{Non-Functional Requirements (Author developed)}
+\label{tab:nfr}
+\centering
+\footnotesize
+\begin{tabular}{p{2.0cm} p{1.8cm} p{2.8cm}}
+\toprule
+\textbf{Requirement} & \textbf{Target Value} & \textbf{Justification} \\
+\midrule
+Sensor-to-decision latency & $<$30\,ms & Cart must react to obstacles before reaching unsafe proximity at walking speed \\
+Emergency stop response time & $<$200\,ms & Heel-impact prevention requires sub-200\,ms full brake from walking speed \\
+UWB position update rate & $\geq$50\,Hz & Smooth follow-me requires frequent user position updates \\
+Maximum following speed & 0.8\,m/s (unloaded) & Matches average comfortable shopping walking pace \\
+Battery operational life & $\geq$3 hours continuous & Must cover a full extended shopping session without recharge \\
+System boot-up time & $<$15 seconds & Acceptable wait time at cart collection point \\
+Weight measurement accuracy & $\pm$200\,g & Sufficient for triggering load-based speed adjustments reliably \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Safety Requirements}
+
+Safety is the highest priority non-functional requirement. The cart
+operates in a shared human environment and must never cause harm. The
+following safety requirements are mandatory for deployment:
+\begin{itemize}
+  \item The cart shall never exceed 1.2\,m/s under any operating condition.
+  \item The emergency stop mechanism shall operate via a hardware relay, independent of software --- cutting motor power even if the Raspberry Pi crashes.
+  \item The cart shall detect and stop for obstacles lower than 20\,cm from the floor (child feet, bags) using IR sensors.
+  \item The system shall prevent motion when basket load exceeds 40\,kg.
+  \item If the UWB link to the user remote is lost for more than 3 seconds, the cart shall decelerate to a stop and wait.
+  \item The cart shall not operate on slopes greater than 10° without triggering a low-speed safe mode.
+  \item All exposed electrical components shall be rated IP42 minimum for indoor retail environments.
+\end{itemize}
+
+\subsection{Reliability and Availability}
+
+The Smart Cart is a consumer-facing product deployed in a commercial
+setting. Reliability failures have direct business and safety consequences.
+\begin{itemize}
+  \item Mean Time Between Failures (MTBF): The system shall operate for a minimum of 500 continuous shopping sessions before requiring scheduled maintenance.
+  \item The software watchdog timer shall recover from non-critical ROS~2 node crashes within 2 seconds without user intervention.
+  \item Battery management shall provide at least 60 seconds of safe operation warning before critical shutdown.
+  \item All sensor failures shall be detected within one processing cycle (25\,ms) and trigger a safe-mode response.
+\end{itemize}
+
+\subsection{Usability Requirements}
+
+The system must be accessible to all user classes without training,
+including elderly shoppers and those unfamiliar with technology.
+\begin{itemize}
+  \item The entire user interface shall consist of two physical buttons only (Follow and Stop) --- no touchscreen, no app, no setup.
+  \item LED status colors shall follow universally recognized conventions: green = safe/active, yellow = caution, red = stop/fault.
+  \item The remote shall weigh no more than 80\,g and fit comfortably in one hand.
+  \item A new user shall be able to begin using the cart within 30 seconds of receiving the remote, with no instruction beyond the LED color guide on the remote lanyard.
+\end{itemize}
+
+\subsection{Maintainability and Serviceability}
+
+Mall operations staff must be able to maintain a fleet of Smart Carts
+with minimal specialist expertise.
+\begin{itemize}
+  \item The battery pack shall be hot-swappable --- replaceable in under 3 minutes without tools.
+  \item All sensor modules shall be individually replaceable without disassembling the main control enclosure.
+  \item The system shall log all fault events with timestamps to an onboard SD card for post-session review by technical staff.
+  \item Firmware updates shall be deployable over USB without requiring disassembly of the cart.
+\end{itemize}
+
+\subsection{Security Requirements}
+
+Although Smart Cart does not handle personal data or payment information,
+the remote-to-cart communication channel must be secured to prevent
+malicious interference in a busy retail environment.
+\begin{itemize}
+  \item The UWB pairing between remote and cart shall use a unique session key generated at each power-on, preventing cross-cart interference or hijacking.
+  \item No external network connectivity (WiFi, Bluetooth) shall be active during normal operation --- the system is fully self-contained.
+  \item Firmware shall only accept signed update packages to prevent unauthorized code execution.
+\end{itemize}

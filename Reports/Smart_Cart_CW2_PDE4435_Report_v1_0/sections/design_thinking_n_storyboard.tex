@@ -1,0 +1,54 @@
+\section{Design Thinking \& Storyboard}
+
+This section documents the design thinking process used by the team to
+arrive at the final Smart Cart concept. Design thinking was applied across
+five stages: Empathize, Define, Ideate, Prototype, and Test. Each stage
+shaped key decisions about the system's hardware configuration, user
+interaction model, and safety approach.
+
+\subsection{Empathize --- Understanding the Problem}
+
+The team began by observing shopping behavior in a large retail mall
+environment. Key pain points identified through observation and informal
+user interviews included:
+\begin{itemize}
+  \item Elderly shoppers struggled to push heavily loaded carts, especially on slight inclines near entrances.
+  \item Parents with young children frequently lose control of carts when distracted.
+  \item Narrow aisles in peak hours caused collisions between carts and other shoppers, particularly at ankle and heel height.
+  \item Cart return was often neglected, causing trolleys to roll freely in car parks.
+\end{itemize}
+
+These direct observations motivated the core design goal: a cart that
+removes physical burden from the user while actively preventing collisions
+in dynamic environments.
+
+\subsection{Define --- Problem Statement}
+
+Based on the empathy stage, the team defined the central problem as:
+
+\begin{quote}
+\textit{``Shoppers in crowded retail environments need a smarter cart
+that follows them autonomously, detects obstacles, and adapts to load ---
+so they can shop safely without physical strain.''}
+\end{quote}
+
+\subsection{Ideate --- Design Concepts Considered}
+
+The team generated three competing design concepts before converging on
+the final solution:
+
+\begin{table}[!ht]
+\caption{Design Concepts Considered During Ideation (Author developed)}
+\label{tab:ideate}
+\centering
+\footnotesize
+\begin{tabular}{p{1.2cm} p{2.3cm} p{3.0cm}}
+\toprule
+\textbf{Concept} & \textbf{Description} & \textbf{Why Rejected / Adopted} \\
+\midrule
+Concept A & GPS-guided outdoor cart with motorized wheels & GPS unreliable indoors; rejected for indoor-only scope \\
+Concept B & Camera-only follow system (no UWB) & Camera occlusion in crowds caused unreliable tracking; rejected \\
+Concept C (Chosen) & UWB-based follow-me with omni-wheels, ultrasonic + IR sensors & Most reliable indoors; handles occlusion; low cost; ADOPTED \\
+\bottomrule
+\end{tabular}
+\end{table}
