@@ -27,14 +27,10 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
 
-EMERGENCY_STOP_M = 0.30
+EMERGENCY_STOP_M = 0.40
 SLOW_ZONE_M      = 0.80
 CAUTION_ZONE_M   = 1.50
 FRONT_ARC_DEG    = 45.0
-
-# In FOLLOW mode, person walks in front — ignore anything beyond this
-# distance from cart body (person is expected obstacle)
-FOLLOW_MODE_MIN_OBSTACLE_M = 0.40  # ignore returns closer than cart body
 
 
 class ObstacleStopNode(Node):
@@ -74,11 +70,7 @@ class ObstacleStopNode(Node):
                 continue
             if math.isnan(r) or math.isinf(r):
                 continue
-            if r < 0.10:   # noise floor — ignore cart body returns
-                continue
-            # In FOLLOW mode, person is expected in front
-            # Only count returns beyond person-follow zone as obstacles
-            if self._mode == 'FOLLOW' and r < FOLLOW_MODE_MIN_OBSTACLE_M:
+            if r < 0.12:   # below lidar range_min — noise floor
                 continue
             valid.append(r)
 
@@ -115,6 +107,9 @@ class ObstacleStopNode(Node):
     def _cmd_cb(self, msg: Twist):
         out = Twist()
         if self._emergency_stop:
+            # Block forward motion but allow angular so the cart can
+            # turn away from the obstacle instead of spinning in place
+            out.angular.z = msg.angular.z
             self._cmd_pub.publish(out)
             return
 

@@ -33,7 +33,8 @@
   <!-- ================================================ -->
   <link name="base_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 3.14159"/>
+      <!-- <origin xyz="0 0 0" rpy="0 0 3.14159"/> -->
+      <origin xyz="0 0 0" rpy="0 0 0.0"/>
       <geometry>
         <box size="${cart_length} ${cart_width} ${cart_height}"/>
       </geometry>
@@ -91,7 +92,7 @@
       <parent link="base_link"/>
       <child  link="${name}_wheel"/>
       <origin xyz="${x} ${y} ${z}" rpy="1.5708 0 0"/>
-      <axis xyz="0 0 1"/>
+      <axis xyz="0 0 -1"/>
       <dynamics damping="0.01" friction="0.01"/>
     </joint>
     <gazebo reference="${name}_wheel">
@@ -328,8 +329,8 @@
   <gazebo>
     <plugin filename="gz-sim-diff-drive-system"
             name="gz::sim::systems::DiffDrive">
-      <left_joint>front_right_wheel_joint</left_joint>
-      <right_joint>front_left_wheel_joint</right_joint>
+      <left_joint>front_left_wheel_joint</left_joint>
+      <right_joint>front_right_wheel_joint</right_joint>
       <wheel_separation>0.54</wheel_separation>
       <wheel_radius>0.075</wheel_radius>
       <max_linear_acceleration>1.0</max_linear_acceleration>

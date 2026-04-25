@@ -386,7 +386,7 @@
       <parent>person</parent>
       <child>left_wheel</child>
       <axis>
-        <xyz>0 0 1</xyz>
+        <xyz>0 0 -1</xyz>
         <limit><lower>-1e16</lower><upper>1e16</upper></limit>
         <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>
       </axis>
@@ -396,7 +396,7 @@
       <parent>person</parent>
       <child>right_wheel</child>
       <axis>
-        <xyz>0 0 1</xyz>
+        <xyz>0 0 -1</xyz>
         <limit><lower>-1e16</lower><upper>1e16</upper></limit>
         <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>
       </axis>
@@ -417,17 +417,17 @@
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <plugin filename="gz-sim-diff-drive-system"
             name="gz::sim::systems::DiffDrive">
-      <left_joint>right_wheel_joint</left_joint>
-      <right_joint>left_wheel_joint</right_joint>
+      <left_joint>left_wheel_joint</left_joint>
+      <right_joint>right_wheel_joint</right_joint>
       <wheel_separation>0.50</wheel_separation>
       <wheel_radius>0.10</wheel_radius>
       <max_linear_velocity>1.5</max_linear_velocity>
       <max_angular_velocity>2.0</max_angular_velocity>
       <max_linear_acceleration>2.0</max_linear_acceleration>
+      <max_angular_acceleration>5.0</max_angular_acceleration>
       <odom_publish_frequency>20</odom_publish_frequency>
       <topic>person/cmd_vel</topic>
       <odom_topic>person/odom</odom_topic>
-      <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>person</child_frame_id>
     </plugin>

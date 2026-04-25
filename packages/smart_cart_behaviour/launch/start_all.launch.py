@@ -79,7 +79,7 @@ def generate_launch_description():
                     '-name', 'smart_cart',
                     '-topic', '/robot_description',
                     '-x', '0.0', '-y', '0.0', '-z', '0.20',
-                    '-R', '0.0', '-P', '0.0', '-Y', '3.14159',  # face forward
+                    '-R', '0.0', '-P', '0.0', '-Y', '0.0', #'3.14159',  # face forward
                 ],
                 output='screen',
             ),
@@ -96,7 +96,7 @@ def generate_launch_description():
                     '-name', 'person',
                     '-file', person_sdf_file,
                     '-x', '2.0', '-y', '0.0', '-z', '0.12',
-                    '-R', '0.0', '-P', '0.0', '-Y', '3.14159',  # face cart (180°)
+                    '-R', '0.0', '-P', '0.0', '-Y', '0.0', #'3.14159',  # face cart (180°)
                 ],
                 output='screen',
             ),
@@ -157,14 +157,14 @@ def generate_launch_description():
                 output='screen',
                 parameters=[{'use_sim_time': True}],
             ),
-            
-            Node(
-                package='joint_state_publisher',
-                executable='joint_state_publisher',
-                name='joint_state_publisher',
-                output='screen',
-                parameters=[{'use_sim_time': True}],
-            ),
+
+            # Node(
+            #     package='joint_state_publisher',
+            #     executable='joint_state_publisher',
+            #     name='joint_state_publisher',
+            #     output='screen',
+            #     parameters=[{'use_sim_time': True}],
+            # ),
 
             # Node(
             #     package='tf2_ros',
