@@ -47,12 +47,51 @@ and sensor I/O.
 
 \subsection{System Architecture Overview}
 
-% Figure placeholder — replace filename with your actual image file
 \begin{figure}[!ht]
-  \centering
-  \includegraphics[width=\columnwidth]{images/image.png}
-  \caption{System Architecture Overview (Author Developed)}
-  \label{fig:sysarch}
+\centering
+\begin{tikzpicture}[
+  >=Stealth, thick,
+  box/.style={rectangle, rounded corners=3pt, draw=black!70, thick,
+              minimum width=2.5cm, minimum height=0.65cm,
+              font=\tiny\bfseries, align=center, fill=blue!12},
+  sim/.style={box, fill=orange!15},
+  io/.style={box, fill=gray!18},
+  arr/.style={->, thick},
+  lbl/.style={font=\tiny, fill=white, inner sep=1pt}
+]
+% ── Layer 1: Input ──────────────────────────────
+\node[io] (kb) at (2.5, 5.6) {Keyboard Input};
+
+% ── Layer 2: Teleop ─────────────────────────────
+\node[box] (teleop) at (2.5, 4.7) {teleop\_person\_node};
+
+% ── Layer 3: Core nodes ─────────────────────────
+\node[box] (nav)    at (0.2, 3.2) {navigation\_node\\{\scriptsize state machine}};
+\node[box] (uwbsim) at (2.5, 3.2) {uwb\_simulator\_node};
+\node[box] (follow) at (4.8, 3.2) {follow\_me\_node\\{\scriptsize Kalman + P-ctrl}};
+
+% ── Layer 4: Safety ─────────────────────────────
+\node[box] (obs) at (2.5, 1.9) {obstacle\_stop\_node\\{\scriptsize safety layer}};
+
+% ── Layer 5: Gazebo ─────────────────────────────
+\node[sim] (cart)   at (0.8, 0.6) {Cart (Gazebo)};
+\node[sim] (person) at (4.2, 0.6) {Person (Gazebo)};
+
+% ── Arrows ──────────────────────────────────────
+\draw[arr] (kb) -- (teleop);
+\draw[arr] (teleop) to[bend left=12]  node[lbl,right]  {/person/cmd\_vel} (person);
+\draw[arr] (teleop) -- node[lbl,left] {/nav/mode\_cmd}  (nav);
+\draw[arr] (cart)   -- node[lbl,left] {/odom}           (uwbsim.south west);
+\draw[arr] (person) -- node[lbl,right]{/person/odom}    (uwbsim.south east);
+\draw[arr] (uwbsim) -- node[lbl,above]{/uwb/distances}  (follow);
+\draw[arr] (uwbsim.west) to[bend left=10] node[lbl,above]{/uwb/distances} (nav.north east);
+\draw[arr] (follow) to[bend left=10]  node[lbl,right]  {/cmd\_vel\_raw}  (obs);
+\draw[arr] (nav)    to[bend right=10] node[lbl,left]   {/cmd\_vel\_raw}  (obs);
+\draw[arr] (cart.north) to[bend left=30]  node[lbl,left]{/scan}          (obs.south west);
+\draw[arr] (obs) -- node[lbl,left] {/cmd\_vel} (cart);
+\end{tikzpicture}
+\caption{ROS~2 Software Architecture --- Node and Topic Data Flow (Author Developed)}
+\label{fig:sysarch}
 \end{figure}
 
 This diagram illustrates the \textbf{Autonomous Smart Cart System}
@@ -530,13 +569,11 @@ This ensures obstacle safety is enforced regardless of the
 follow-me controller's output.
 
 \begin{figure}[!ht]
-  \centering
-  % Replace with actual rqt_graph screenshot
-  \includegraphics[width=0.85\columnwidth]{images/image.png}
-  \vspace{1cm}
-  \caption{ROS2 Node Communication Graph from Gazebo Simulation 
-           (To be updated)}
-  \label{fig:rosgraph_sim}
+\centering
+\includegraphics[width=0.85\columnwidth]{images/rqt_graph.png}
+\caption{ROS~2 Node Graph from \texttt{rqt\_graph} --- Gazebo Simulation
+         (replace with screenshot from running simulation)}
+\label{fig:rosgraph_sim}
 \end{figure}
 
 \subsection{Localization Subsystem}
@@ -679,10 +716,44 @@ operation, obstacle avoidance decision-making, load-based speed
 adaptation, and emergency stopping.
 
 \begin{figure}[!ht]
-  \centering
-  \includegraphics[width=0.85\columnwidth]{images/image.png}
-  \caption{Smart Cart Operational Flowchart (Author Developed)}
-  \label{fig:flowchart}
+\centering
+\begin{tikzpicture}[
+  >=Stealth, thick,
+  state/.style={rectangle, rounded corners=6pt, draw=black, thick,
+                minimum width=2.2cm, minimum height=0.9cm,
+                font=\small\bfseries, align=center},
+  lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt}
+]
+% ── States ──────────────────────────────────────
+\node[state, fill=gray!22]  (idle)   at (0, 0)    {IDLE\\[-2pt]{\tiny zero vel}};
+\node[state, fill=green!22] (follow) at (4.2, 0)  {FOLLOW\\[-2pt]{\tiny follow\_me active}};
+\node[state, fill=red!18]   (stop)   at (2.1,-2.6){STOP\\[-2pt]{\tiny zero vel}};
+
+% ── Transitions ─────────────────────────────────
+% IDLE <-> FOLLOW
+\draw[->, bend left=18] (idle) to
+  node[lbl, above] {btn 2 (FOLLOW)} (follow);
+\draw[->, bend left=18] (follow) to
+  node[lbl, below] {btn 3 (IDLE)} (idle);
+
+% FOLLOW -> IDLE watchdog (dashed)
+\draw[->, dashed, bend left=55] (follow) to
+  node[lbl, above right] {UWB lost $>$5\,s} (idle);
+
+% FOLLOW <-> STOP
+\draw[->, bend left=18] (follow) to
+  node[lbl, right] {btn 1 (STOP)} (stop);
+\draw[->, bend left=18] (stop) to
+  node[lbl, left]  {btn 2 (FOLLOW)} (follow);
+
+% IDLE <-> STOP
+\draw[->, bend right=18] (idle) to
+  node[lbl, left]  {btn 1 (STOP)} (stop);
+\draw[->, bend right=18] (stop) to
+  node[lbl, right] {btn 3 (IDLE)} (idle);
+\end{tikzpicture}
+\caption{Navigation State Machine --- Mode Transitions (Author Developed)}
+\label{fig:flowchart}
 \end{figure}
 
 \subsection{Assumptions and Dependencies}
