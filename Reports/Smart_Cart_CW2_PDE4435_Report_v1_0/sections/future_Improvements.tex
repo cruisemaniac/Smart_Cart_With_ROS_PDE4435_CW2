@@ -1,0 +1,31 @@
+\section{Future Improvements}
+
+The current Smart Cart specification represents a first-generation system
+designed for practical deployment with commercially available components.
+As the system matures through real-world testing and user feedback, several
+enhancements are anticipated to improve capability, user experience, and
+commercial viability.
+
+\begin{table}[!ht]
+\caption{Proposed Future Enhancements (Author developed)}
+\label{tab:future}
+\centering
+\footnotesize
+\begin{tabular}{p{1.8cm} p{2.5cm} p{2.5cm}}
+\toprule
+\textbf{Enhancement} & \textbf{Description} & \textbf{Expected Benefit} \\
+\midrule
+Shopping App Integration & Bluetooth link to shopper's phone to display shopping list and aisle navigation & Transforms cart into a personalised shopping assistant \\
+Automatic Return-to-Base & When session ends and remote is docked, cart navigates autonomously back to charging station & Reduces staff workload; keeps carts charged and organised \\
+Multi-Cart Fleet Management & Central dashboard for mall operators to monitor battery, location, and fault status of all carts & Improves operational efficiency at scale \\
+Computer Vision Upgrade & Replace UWB tracking with camera-based human pose estimation (e.g.\ MediaPipe) & Removes need for user to carry remote; fully hands-free operation \\
+Voice Feedback & Add a small speaker for audible alerts in noisy environments where LEDs may be missed & Improves accessibility for visually impaired shoppers \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Of these enhancements, the Computer Vision Upgrade and Automatic
+Return-to-Base represent the highest-priority upgrades for a
+second-generation prototype, as they directly address the primary
+technical limitation of the current design --- its reliance on
+short-range ultrasonic sensing for obstacle detection.

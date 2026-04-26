@@ -13,3 +13,22 @@ log/
 .idea/
 venv/
 .venv/
+
+
+# LaTeX build files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+
+# Output PDF (optional ignore)
+Reports/Smart_Cart_CW2_PDE4435_Report_v1_0/*.pdf
