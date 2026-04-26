@@ -47,12 +47,51 @@ and sensor I/O.
 
 \subsection{System Architecture Overview}
 
-% Figure placeholder — replace filename with your actual image file
 \begin{figure}[!ht]
-  \centering
-  \includegraphics[width=\columnwidth]{images/image.png}
-  \caption{System Architecture Overview (Author Developed)}
-  \label{fig:sysarch}
+\centering
+\begin{tikzpicture}[
+  >=Stealth, thick,
+  box/.style={rectangle, rounded corners=3pt, draw=black!70, thick,
+              minimum width=2.5cm, minimum height=0.65cm,
+              font=\tiny\bfseries, align=center, fill=blue!12},
+  sim/.style={box, fill=orange!15},
+  io/.style={box, fill=gray!18},
+  arr/.style={->, thick},
+  lbl/.style={font=\tiny, fill=white, inner sep=1pt}
+]
+% ── Layer 1: Input ──────────────────────────────
+\node[io] (kb) at (2.5, 5.6) {Keyboard Input};
+
+% ── Layer 2: Teleop ─────────────────────────────
+\node[box] (teleop) at (2.5, 4.7) {teleop\_person\_node};
+
+% ── Layer 3: Core nodes ─────────────────────────
+\node[box] (nav)    at (0.2, 3.2) {navigation\_node\\{\scriptsize state machine}};
+\node[box] (uwbsim) at (2.5, 3.2) {uwb\_simulator\_node};
+\node[box] (follow) at (4.8, 3.2) {follow\_me\_node\\{\scriptsize Kalman + P-ctrl}};
+
+% ── Layer 4: Safety ─────────────────────────────
+\node[box] (obs) at (2.5, 1.9) {obstacle\_stop\_node\\{\scriptsize safety layer}};
+
+% ── Layer 5: Gazebo ─────────────────────────────
+\node[sim] (cart)   at (0.8, 0.6) {Cart (Gazebo)};
+\node[sim] (person) at (4.2, 0.6) {Person (Gazebo)};
+
+% ── Arrows ──────────────────────────────────────
+\draw[arr] (kb) -- (teleop);
+\draw[arr] (teleop) to[bend left=12]  node[lbl,right]  {/person/cmd\_vel} (person);
+\draw[arr] (teleop) -- node[lbl,left] {/nav/mode\_cmd}  (nav);
+\draw[arr] (cart)   -- node[lbl,left] {/odom}           (uwbsim.south west);
+\draw[arr] (person) -- node[lbl,right]{/person/odom}    (uwbsim.south east);
+\draw[arr] (uwbsim) -- node[lbl,above]{/uwb/distances}  (follow);
+\draw[arr] (uwbsim.west) to[bend left=10] node[lbl,above]{/uwb/distances} (nav.north east);
+\draw[arr] (follow) to[bend left=10]  node[lbl,right]  {/cmd\_vel\_raw}  (obs);
+\draw[arr] (nav)    to[bend right=10] node[lbl,left]   {/cmd\_vel\_raw}  (obs);
+\draw[arr] (cart.north) to[bend left=30]  node[lbl,left]{/scan}          (obs.south west);
+\draw[arr] (obs) -- node[lbl,left] {/cmd\_vel} (cart);
+\end{tikzpicture}
+\caption{ROS~2 Software Architecture --- Node and Topic Data Flow (Author Developed)}
+\label{fig:sysarch}
 \end{figure}
 
 This diagram illustrates the \textbf{Autonomous Smart Cart System}
@@ -107,6 +146,12 @@ Turning Radius & 0\,cm (in-place rotation) & Full holonomic capability via omni-
 \bottomrule
 \end{tabular}
 \end{table}
+
+\textit{Note: The physical design uses omni-wheels for holonomic
+motion. In the Gazebo simulation a standard differential-drive model
+is used, as the follow-me and obstacle avoidance algorithms do not
+require holonomic kinematics to be validated. The full omni-wheel
+model would be integrated in the physical prototype.}
 
 \subsubsection{Mechanical Design Calculations}
 
@@ -192,8 +237,58 @@ Omni wheels were selected to enable holonomic motion, allowing lateral movement 
 
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=\columnwidth]{images/image.png}
-  \caption{Mechanical System Diagram (Author developed)}
+  % ── When real diagram is ready, replace TikZ block below with: ──────────
+  % \includegraphics[width=\columnwidth]{images/mechanical_diagram.png}
+  % ────────────────────────────────────────────────────────────────────────
+  \begin{tikzpicture}[scale=0.82, every node/.style={font=\tiny}]
+    % ── Chassis frame ───────────────────────────────────────────────────
+    \draw[thick] (0,0) rectangle (4.2,5.8);
+    \node[font=\scriptsize\bfseries] at (2.1,2.9) {Shopping Basket};
+
+    % ── Omni wheels (corners) ────────────────────────────────────────────
+    \foreach \x/\y/\lbl in {
+        -0.55/5.1/FL, 4.2+0.15/5.1/FR,
+        -0.55/0.5/RL, 4.2+0.15/0.5/RR}{
+      \draw[fill=gray!40] (\x,\y) rectangle ++(0.4,0.6);
+      \node at (\x+0.2,\y+0.3) {\lbl};
+    }
+
+    % ── UWB anchors (corner labels) ──────────────────────────────────────
+    \node[draw,circle,inner sep=1pt,fill=blue!20] at (0.3,5.5)  {\tiny UWB};
+    \node[draw,circle,inner sep=1pt,fill=blue!20] at (3.9,5.5)  {\tiny UWB};
+    \node[draw,circle,inner sep=1pt,fill=blue!20] at (0.3,0.3)  {\tiny UWB};
+    \node[draw,circle,inner sep=1pt,fill=blue!20] at (3.9,0.3)  {\tiny UWB};
+
+    % ── LiDAR (front-top centre) ─────────────────────────────────────────
+    \draw[fill=orange!30] (1.7,5.2) rectangle (2.5,5.7);
+    \node at (2.1,5.45) {LiDAR};
+
+    % ── Battery (lower centre) ───────────────────────────────────────────
+    \draw[fill=yellow!40] (1.2,0.6) rectangle (3.0,1.4);
+    \node at (2.1,1.0) {24V LiPo};
+
+    % ── Electronics box (mid-lower) ─────────────────────────────────────
+    \draw[fill=green!20] (0.8,1.6) rectangle (3.4,2.6);
+    \node at (2.1,2.1) {RPi4 + Arduino Mega};
+
+    % ── Ultrasonic sensors (front face) ──────────────────────────────────
+    \draw[fill=gray!25] (1.1,5.75) rectangle (1.6,6.05);
+    \node at (1.35,5.9) {US};
+    \draw[fill=gray!25] (2.6,5.75) rectangle (3.1,6.05);
+    \node at (2.85,5.9) {US};
+
+    % ── Camera (handle, top) ─────────────────────────────────────────────
+    \draw[fill=purple!20] (1.6,6.1) rectangle (2.6,6.4);
+    \node at (2.1,6.25) {RealSense};
+
+    % ── Dimension arrows ─────────────────────────────────────────────────
+    \draw[<->] (-1.1,0) -- (-1.1,5.8) node[midway,left] {$\sim$700\,mm};
+    \draw[<->] (0,-0.5) -- (4.2,-0.5) node[midway,below] {$\sim$500\,mm};
+
+    % ── Direction indicator ───────────────────────────────────────────────
+    \draw[->, thick] (4.8,2.9) -- (4.8,4.2) node[right] {Fwd};
+  \end{tikzpicture}
+  \caption{Mechanical System Diagram --- Top-Down Layout (Author developed)}
   \label{fig:mech}
 \end{figure}
 
@@ -404,7 +499,14 @@ Tilt/Fall Detection & IMU pitch/roll $>$15° & Motors disabled, alert triggered 
 
 \subsection{Software Overview}
 
-The Smart Cart software stack is built on ROS~2 (Humble Hawksbill) 
+\textit{Note: The hardware design described in Sections~III-A through
+III-F covers the full physical system specification. The Gazebo
+simulation validates the core navigation algorithms (UWB follow-me,
+Kalman filtering, obstacle avoidance). Hardware-specific components ---
+load cells, RGB LEDs, depth camera, and Arduino serial bridge --- are
+part of the physical design and are not instantiated in simulation.}
+
+The Smart Cart software stack is built on ROS~2 (Jazzy Jalopy)
 and simulated within Gazebo. The architecture follows a modular 
 node-based design, where each functional subsystem is implemented 
 as an independent ROS~2 node communicating via a publish-subscribe 
@@ -413,20 +515,42 @@ model.
 In the simulation, a unified teleop node serves dual purposes: WASD 
 keyboard input drives the user avatar model in Gazebo, while keys 
 \texttt{1}, \texttt{2}, and \texttt{3} simulate the handheld remote, 
-publishing \texttt{STOP}, \texttt{FOLLOW}, and \texttt{IDLE} commands 
-respectively to the \texttt{/remote\_cmd} topic. This design allows a 
-single operator to control both the person and the cart state during 
-testing, directly replicating the intended physical remote behavior 
-within simulation.
+publishing mode commands to three topics: \texttt{/remote/button}
+(String label), \texttt{/remote/button\_int} (integer code), and
+\texttt{/nav/mode\_cmd} (String command). Keys \texttt{1}, \texttt{2},
+\texttt{3} map to \texttt{STOP}, \texttt{FOLLOW}, and \texttt{IDLE}
+respectively. This allows a single operator to control both the person
+avatar and the cart mode during simulation testing.
 
 \subsection{Layered ROS~2 Architecture}
 
-\begin{figure}[!ht]
-  \centering
-  \includegraphics[width=\columnwidth]{images/image.png}
-  \caption{ROS~2 Node Communication Graph (Author Developed)}
-  \label{fig:rosgraph}
-\end{figure}
+\begin{itemize}
+  \item \texttt{gz sim} --- Gazebo Harmonic physics engine; hosts cart 
+        and person models, publishes sensor data via ROS-Gz bridge
+  \item \texttt{robot\_state\_publisher} --- publishes URDF transforms 
+        for the cart on \texttt{/tf}
+  \item \texttt{joint\_state\_publisher} --- publishes cart joint states
+  \item \texttt{teleop\_person\_node} --- unified keyboard input node; 
+        WASD drives the person avatar on \texttt{/person/cmd\_vel}; 
+        keys 1, 2, 3 publish Stop/Follow/Idle commands to 
+        \texttt{/nav/mode\_cmd}
+  \item \texttt{uwb\_simulator\_node} --- simulates four UWB anchors 
+        using cart and person odometry; publishes distances on 
+        \texttt{/uwb/distances} (Float32MultiArray) and RViz markers 
+        on \texttt{/uwb/markers}
+  \item \texttt{navigation\_node} --- state machine managing IDLE, 
+        FOLLOW, STOP, and MANUAL modes; subscribes to 
+        \texttt{/nav/mode\_cmd} and publishes \texttt{/nav/current\_mode} 
+        and \texttt{/nav/status}; includes a 5-second UWB watchdog
+  \item \texttt{follow\_me\_node} --- UWB trilateration + Kalman2D 
+        filter; proportional controller publishes velocity commands to 
+        \texttt{/cmd\_vel\_raw}
+  \item \texttt{obstacle\_stop\_node} --- subscribes to 
+        \texttt{/cmd\_vel\_raw} and \texttt{/scan}; scales velocity 
+        based on LiDAR proximity and publishes to \texttt{/cmd\_vel}
+  \item \texttt{rviz2} --- real-time visualisation of LiDAR scan, 
+        cart pose, UWB markers, and person position
+\end{itemize}
 
 \subsection{Gazebo Simulation Environment}
 
@@ -439,28 +563,43 @@ and a mobile user agent for follow-me validation.
 The cart is modeled as a differential-drive robot in URDF format,
 with the following key elements:
 \begin{itemize}
-  \item Base chassis link with inertial properties matching the 
-        physical design (40\,kg max)
-  \item Four wheel joints with continuous rotation
-  \item 2D LiDAR plugin (\texttt{libgazebo\_ros\_ray\_sensor}) 
-        mounted at chassis front-top
+  \item Base chassis link with inertial mass of 15\,kg (robot body); 
+        maximum payload capacity is 40\,kg
+  \item Four wheel joints (front-left, front-right, rear-left, 
+        rear-right) with continuous rotation
+  \item GPU LiDAR sensor (\texttt{gpu\_lidar} type) mounted at 
+        chassis front-top; bridged to \texttt{/scan} via 
+        \texttt{ros\_gz\_bridge}
   \item Differential drive plugin 
-        (\texttt{libgazebo\_ros\_diff\_drive}) for \texttt{/cmd\_vel} 
-        control
+        (\texttt{gz-sim-diff-drive-system}, Gazebo Harmonic) 
+        subscribing to \texttt{/cmd\_vel}
+  \item Four UWB anchor visual links (\texttt{uwb\_fl}, 
+        \texttt{uwb\_fr}, \texttt{uwb\_rl}, \texttt{uwb\_rr}) 
+        at cart corners
+  \item Intel RealSense-style depth camera (\texttt{camera\_link}) 
+        bridged to \texttt{/camera/color/image\_raw} and 
+        \texttt{/camera/depth/image\_raw}
 \end{itemize}
 
 \subsubsection{Gazebo World Configuration}
 
 The simulated retail environment consists of:
 \begin{itemize}
-  \item Aisle width: 0.9\,m (matching Phase 3 test T3.5)
-  \item Static obstacles: shelf models placed at defined positions
-  \item A human avatar model representing the user, controlled 
-        via teleoperation using WASD keyboard commands
-  \item The cart robot spawned at a fixed origin; the user avatar 
-        spawned offset ahead of the cart
-  \item Spawn positions for cart and user defined in 
-        \texttt{world.launch.py}
+  \item Supermarket world with left/right walls ($\pm$2.5\,m), 
+        two shelf models ($\pm$1.5\,m), and a static orange 
+        obstacle box (0.3$\times$0.3$\times$0.5\,m) at position 
+        (2.0, 0.6) to simulate aisle obstructions
+  \item The cart spawns at origin (0, 0, 0.20\,m); the person 
+        model spawns at (2.0, 0.0, 0.12\,m)
+  \item The person is a diff-drive robot model with human visual 
+        geometry (head, torso, arms, legs) receiving velocity 
+        commands on \texttt{/person/cmd\_vel} and publishing 
+        odometry on \texttt{/person/odom}
+  \item Spawn positions and launch timing defined in 
+        \texttt{start\_all.launch.py} using staged 
+        \texttt{TimerAction} delays (Gazebo$\to$t=0, 
+        cart spawn$\to$t=3\,s, person$\to$t=4\,s, 
+        ROS nodes$\to$t=6\,s, RViz$\to$t=7\,s)
 \end{itemize}
 
 \subsubsection{ROS2 Node Graph}
@@ -484,65 +623,60 @@ The active ROS2 nodes during simulation include:
         cart pose, and avatar position
 \end{itemize}
 
-A single teleop command node handles both avatar locomotion and 
-remote button simulation. WASD keystrokes are published to the 
-avatar's velocity topic, while keys \texttt{1}, \texttt{2}, and 
-\texttt{3} publish mode commands (\texttt{STOP}, \texttt{FOLLOW}, 
-\texttt{IDLE}) to the \texttt{/remote\_cmd} topic, which the 
-follow-me controller subscribes to.
+The two-stage velocity pipeline is a key architectural feature: 
+\texttt{follow\_me\_node} computes velocity and publishes to 
+\texttt{/cmd\_vel\_raw}; \texttt{obstacle\_stop\_node} intercepts 
+this, applies proximity-based scaling, and forwards the result to 
+\texttt{/cmd\_vel} which Gazebo's DiffDrive plugin consumes. 
+This ensures obstacle safety is enforced regardless of the 
+follow-me controller's output.
 
-\begin{figure}[!ht]
-  \centering
-  % Replace with actual rqt_graph screenshot
-  \includegraphics[width=0.85\columnwidth]{images/image.png}
-  \vspace{1cm}
-  \caption{ROS2 Node Communication Graph from Gazebo Simulation 
-           (To be updated)}
-  \label{fig:rosgraph_sim}
-\end{figure}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{images/rqt_graph.png}
+\caption{ROS~2 Node Graph from \texttt{rqt\_graph} --- Gazebo Simulation (Author developed)}
+\label{fig:rosgraph_sim}
+\end{figure*}
 
 \subsection{Localization Subsystem}
 
-The localization architecture employs a multi-stage sensor fusion approach
-to maintain high-precision positioning in dynamic retail environments. At
-the core is the \texttt{ekf\_localization} node, which utilizes an
-Extended Kalman Filter (EKF) to fuse four distinct data streams: Wheel
-Odometry (relative motion from encoders), UWB TDoA (absolute
-user-relative positioning), Visual Odometry (relative motion from the
-depth camera), and LiDAR-based Scan Matching (spatial alignment). This
-``quad-redundancy'' ensures the cart maintains a pose estimate accurate
-within 5\,cm, even if individual sensor streams---such as the camera's
-view or UWB signals---become noisy due to crowding or metallic
-interference.
+User localisation in simulation is achieved through a UWB simulation 
+and Kalman filtering pipeline implemented across two nodes.
 
-The process begins with the \texttt{uwb\_localisation} node, which
-computes the user's 2D position relative to the cart using a weighted
-least-squares multilateration algorithm from four DWM1000 anchors.
-Simultaneously, the 2D LiDAR provides a 360° scan of the environment at
-8000\,samples/s, allowing the \texttt{slam\_toolbox} or
-\texttt{cartographer} node to match the current scan against a stored
-mall map to provide a global position correction. The Depth Camera
-provides high-frequency visual odometry to fill in gaps between LiDAR
-updates. Finally, the EKF ingests the \texttt{/user\_pose},
-\texttt{/scan\_match}, and \texttt{/camera/odom} updates alongside raw
-wheel odometry to produce a smooth, low-latency pose estimate published
-on the \texttt{/ekf\_pose} topic.
+The \texttt{uwb\_simulator\_node} places four virtual anchors at the 
+cart corners. At each timestep (20\,Hz), it reads the current Gazebo 
+positions of both the cart (\texttt{/odom}) and the person 
+(\texttt{/person/odom}), computes the Euclidean distance from each 
+anchor to the person, and adds Gaussian noise ($\sigma = 0.08$\,m, 
+bias $= 0.02$\,m) to simulate realistic UWB hardware error. These four 
+distances are published as a \texttt{Float32MultiArray} on 
+\texttt{/uwb/distances}.
+
+The \texttt{follow\_me\_node} consumes these distances and runs a 
+least-squares trilateration algorithm to estimate the person's 2D 
+position relative to the cart. This raw estimate is fed into a 
+\texttt{Kalman2D} filter (from \texttt{uwb\_filter\_node.py}) with 
+process noise $Q = 0.05\mathbf{I}$ and measurement noise 
+$R = 0.3\mathbf{I}$. The filter has a 10-cycle warmup period during 
+which the raw trilateration result is used directly. After warmup, 
+the smoothed estimate drives the follow-me proportional controller.
 
 \begin{table}[!ht]
-\caption{Localization Subsystem ROS~2 Topics (Author developed)}
+\caption{Localisation Subsystem ROS~2 Topics (Author developed)}
 \label{tab:localization}
 \centering
 \footnotesize
-\begin{tabular}{p{1.8cm} p{2.5cm} p{2.5cm}}
+\begin{tabular}{p{2.0cm} p{2.2cm} p{2.4cm}}
 \toprule
-\textbf{ROS~2 Topic / Service} & \textbf{Message Type} & \textbf{Description} \\
+\textbf{Topic} & \textbf{Message Type} & \textbf{Description} \\
 \midrule
-\texttt{/user\_pose} & \texttt{geometry\_msgs/ PoseStamped} & User position relative to cart \\
-\texttt{/uwb\_raw} & \texttt{sensor\_msgs/ Range} & Raw range from each anchor \\
-\texttt{/odom} & \texttt{nav\_msgs/ Odometry} & Wheel encoder odometry \\
-\texttt{/ekf\_pose} & \texttt{geometry\_msgs/ PoseWithCovariance} & EKF-fused pose estimate \\
-\texttt{/scan} & \texttt{sensor\_msgs/ LaserScan} & 2D LiDAR data for mapping \\
-\texttt{/camera/odom} & \texttt{nav\_msgs/ Odometry} & Visual odometry for positioning \\
+\texttt{/uwb/distances} & \texttt{Float32MultiArray} & Noisy distances from 4 UWB anchors to person \\
+\texttt{/uwb/distance}  & \texttt{Float32} & Scalar distance to person \\
+\texttt{/uwb/angle}     & \texttt{Float32} & Bearing angle to person (rad) \\
+\texttt{/uwb/markers}   & \texttt{MarkerArray} & RViz visualisation of UWB geometry \\
+\texttt{/odom}          & \texttt{Odometry} & Cart wheel odometry \\
+\texttt{/person/odom}   & \texttt{Odometry} & Person model odometry (ground truth) \\
+\texttt{/scan}          & \texttt{LaserScan} & 2D LiDAR data for obstacle detection \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -557,51 +691,55 @@ The Depth Camera identifies dynamic obstacles and filters out ``noise''
 (such as overhead signage) by focusing on the 3D space directly in the
 cart's path.
 
-Obstacles are classified by proximity zones: WARNING (0.5--1.0\,m), SLOW
-(0.3--0.5\,m), and STOP ($<$0.3\,m). While LiDAR and Camera handle primary
-detection, the ultrasonic and IR sensors act as a safety ``short-range''
-layer to detect transparent objects or low-lying obstacles (e.g., shopper
-feet) in sensor blind spots. The node publishes a consolidated
-\texttt{ObstacleAlert} message to the path planner.
+The \texttt{obstacle\_stop\_node} monitors only the forward 
+$\pm$45° arc of the LiDAR scan. Obstacles are classified into 
+three proximity zones and a speed scale factor applied to the 
+incoming \texttt{/cmd\_vel\_raw} velocity before forwarding to 
+\texttt{/cmd\_vel}: CAUTION ($<$1.5\,m, 80\% speed), 
+SLOW ($<$0.8\,m, 50\% speed), and EMERGENCY ($<$0.3\,m, 0\% speed). 
+In FOLLOW mode, LiDAR returns closer than 0.4\,m are ignored to 
+prevent false stops triggered by the followed person.
 
 \begin{table}[!ht]
 \caption{Obstacle Proximity Zones and Cart Responses (Author developed)}
 \label{tab:zones}
 \centering
 \footnotesize
-\begin{tabular}{p{1.2cm} p{1.8cm} p{3.6cm}}
+\begin{tabular}{p{1.5cm} p{1.8cm} p{3.3cm}}
 \toprule
-\textbf{Zone} & \textbf{Distance} & \textbf{Behavior} \\
+\textbf{Zone} & \textbf{Distance} & \textbf{Behaviour} \\
 \midrule
-CLEAR   & $>$1.0\,m        & Normal following speed (0.8\,m/s) \\
-WARNING & 0.5 -- 1.0\,m   & Speed reduced to 0.4\,m/s, yellow LED \\
-SLOW    & 0.3 -- 0.5\,m   & Speed reduced to 0.2\,m/s, path re-route \\
-STOP    & $<$0.3\,m        & Emergency brake, red LED, hold position \\
+NORMAL    & $\geq$1.5\,m      & Full speed (100\%) \\
+CAUTION   & $<$1.5\,m         & Speed reduced to 80\% \\
+SLOW      & $<$0.8\,m         & Speed reduced to 50\% \\
+EMERGENCY & $<$0.3\,m         & Full stop (0\%), hold position \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Path Planning and Follow-Me Controller}
+\subsection{Follow-Me Controller}
 
-The path planner implements a Dynamic Window Approach (DWA) local planner
-that operates on a costmap generated by the LiDAR and Depth Camera. This
-allows the cart to calculate feasible velocity trajectories that
-proactively steer around obstacles rather than simply stopping.
+The follow-me controller in \texttt{follow\_me\_node} implements a 
+pure \textbf{proportional (P) controller} --- there is no path planner, 
+costmap, or DWA. The controller runs at 20\,Hz and computes:
 
-The follow-me controller uses a Proportional-Derivative (PD) control law
-based on the \texttt{/ekf\_pose} which, as defined in Section~III-H, is
-stabilized by Visual Odometry and LiDAR scan-matching. The target
-following offset is maintained at 0.8\,m behind the user. By utilizing
-the LiDAR-based costmap, the cart can perform smooth ``re-routing''
-maneuvers in narrow aisles (e.g., 0.9\,m width) without losing track of
-the user or colliding with shelves.
+\begin{equation}
+  v_{linear} = \min(v_{max},\; K_P \cdot e_{dist})
+\end{equation}
+\begin{equation}
+  \omega_{angular} = K_P \cdot e_{angle}
+\end{equation}
 
-\begin{figure}[!ht]
-  \centering
-  \includegraphics[width=\columnwidth]{images/image.png}
-  \caption{Follow-Me Path Planning Control Loop (Author developed)}
-  \label{fig:followme}
-\end{figure}
+where $K_P = 0.6$, $v_{max} = 0.8$\,m/s, $e_{dist}$ is the error 
+from the 1.0\,m target following distance, and $e_{angle}$ is the 
+bearing angle to the person. A dead zone of 0.15\,m suppresses 
+linear motion when the cart is within tolerance, and an angle 
+deadband of 0.15\,rad suppresses small angular corrections.
+
+If no UWB data arrives within 1 second, the controller stops the 
+cart. The \texttt{navigation\_node} watchdog additionally reverts 
+the mode to IDLE if the UWB link is lost for more than 5 seconds.
+
 
 \subsection{Arduino--Raspberry Pi Communication Bridge}
 
@@ -640,10 +778,44 @@ operation, obstacle avoidance decision-making, load-based speed
 adaptation, and emergency stopping.
 
 \begin{figure}[!ht]
-  \centering
-  \includegraphics[width=0.85\columnwidth]{images/image.png}
-  \caption{Smart Cart Operational Flowchart (Author Developed)}
-  \label{fig:flowchart}
+\centering
+\begin{tikzpicture}[
+  >=Stealth, thick,
+  state/.style={rectangle, rounded corners=6pt, draw=black, thick,
+                minimum width=2.2cm, minimum height=0.9cm,
+                font=\small\bfseries, align=center},
+  lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt}
+]
+% ── States ──────────────────────────────────────
+\node[state, fill=gray!22]  (idle)   at (0, 0)    {IDLE\\[-2pt]{\tiny zero vel}};
+\node[state, fill=green!22] (follow) at (4.2, 0)  {FOLLOW\\[-2pt]{\tiny follow\_me active}};
+\node[state, fill=red!18]   (stop)   at (2.1,-2.6){STOP\\[-2pt]{\tiny zero vel}};
+
+% ── Transitions ─────────────────────────────────
+% IDLE <-> FOLLOW
+\draw[->, bend left=18] (idle) to
+  node[lbl, above] {btn 2 (FOLLOW)} (follow);
+\draw[->, bend left=18] (follow) to
+  node[lbl, below] {btn 3 (IDLE)} (idle);
+
+% FOLLOW -> IDLE watchdog (dashed)
+\draw[->, dashed, bend left=55] (follow) to
+  node[lbl, above right] {UWB lost $>$5\,s} (idle);
+
+% FOLLOW <-> STOP
+\draw[->, bend left=18] (follow) to
+  node[lbl, right] {btn 1 (STOP)} (stop);
+\draw[->, bend left=18] (stop) to
+  node[lbl, left]  {btn 2 (FOLLOW)} (follow);
+
+% IDLE <-> STOP
+\draw[->, bend right=18] (idle) to
+  node[lbl, left]  {btn 1 (STOP)} (stop);
+\draw[->, bend right=18] (stop) to
+  node[lbl, right] {btn 3 (IDLE)} (idle);
+\end{tikzpicture}
+\caption{Navigation State Machine --- Mode Transitions (Author Developed)}
+\label{fig:flowchart}
 \end{figure}
 
 \subsection{Assumptions and Dependencies}

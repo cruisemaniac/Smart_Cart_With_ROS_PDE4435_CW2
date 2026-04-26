@@ -17,6 +17,8 @@
 \usepackage{soul}        
 \usepackage{microtype}
 \usepackage{cite}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
 
 \hypersetup{
   colorlinks=true,
@@ -46,16 +48,18 @@
 % ─── Abstract ────────────────────────────────────────────────────────────────
 \begin{abstract}
 This paper presents the design, implementation, and evaluation of an
-Autonomous Smart Cart system developed using ROS2 and Gazebo simulation.
-The system integrates a 2D LiDAR sensor with a follow-me behavior and
-obstacle avoidance controller, enabling a mobile robot platform to
-autonomously track a user within a simulated indoor retail environment.
-The ROS2 Navigation2 (Nav2) stack is used for path planning and
-localization, while Gazebo provides a physics-accurate simulation
-environment for testing and validation. Initial simulation results in Gazebo demonstrate successful follow-me 
-behavior and obstacle avoidance within a simulated indoor retail 
-environment. Full quantitative evaluation is ongoing; preliminary 
-findings and system architecture are presented in this draft report.
+Autonomous Smart Cart system developed using ROS~2 Jazzy and Gazebo
+Harmonic simulation. The system integrates Ultra-Wideband (UWB)
+positioning with a 2D LiDAR safety layer to enable a differential-drive
+robot to autonomously track a user within a simulated indoor retail
+environment. A UWB simulator node generates four-anchor range measurements
+from odometry data, a 2D Kalman filter smooths the position estimates,
+and a proportional follow-me controller drives the cart to maintain a
+1.0\,m following distance. Obstacle safety is enforced by a pass-through
+node that scales velocity commands based on LiDAR proximity zones before
+they reach Gazebo. Simulation results in Gazebo Harmonic demonstrate
+successful follow-me behaviour and layered obstacle avoidance within a
+simulated indoor retail environment.
 \end{abstract}
 
 \IEEEpeerreviewmaketitle
@@ -67,7 +71,7 @@ findings and system architecture are presented in this draft report.
 \input{sections/related_works}
 
 % ─── III. System Design ──────────────────────────────────────────────────────
-\input{sections/system_dewsign_and_simulation}
+\input{sections/system_design_and_simulation}
 
 % ─── IV. Non-Functional Requirements ─────────────────────────────────────────
 \input{sections/non_functional_requirements}
@@ -83,6 +87,9 @@ findings and system architecture are presented in this draft report.
 
 % ─── VIII. Future Improvements ───────────────────────────────────────────────
 \input{sections/future_Improvements}
+
+% ─── IX. Conclusion ──────────────────────────────────────────────────────────
+\input{sections/conclusion}
 
 % ─── Appendix D: Use of Generative AI ────────────────────────────────────────
 \appendix

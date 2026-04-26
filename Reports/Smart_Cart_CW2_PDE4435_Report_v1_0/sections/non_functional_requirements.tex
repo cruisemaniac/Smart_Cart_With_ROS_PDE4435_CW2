@@ -21,7 +21,7 @@ safely and usefully in a real retail environment:
 \midrule
 Sensor-to-decision latency & $<$30\,ms & Cart must react to obstacles before reaching unsafe proximity at walking speed \\
 Emergency stop response time & $<$200\,ms & Heel-impact prevention requires sub-200\,ms full brake from walking speed \\
-UWB position update rate & $\geq$50\,Hz & Smooth follow-me requires frequent user position updates \\
+UWB position update rate & 20\,Hz & Simulated UWB node publishes at 20\,Hz; hardware target is $\geq$50\,Hz \\
 Maximum following speed & 0.8\,m/s (unloaded) & Matches average comfortable shopping walking pace \\
 Battery operational life & $\geq$3 hours continuous & Must cover a full extended shopping session without recharge \\
 System boot-up time & $<$15 seconds & Acceptable wait time at cart collection point \\
@@ -40,7 +40,7 @@ following safety requirements are mandatory for deployment:
   \item The emergency stop mechanism shall operate via a hardware relay, independent of software --- cutting motor power even if the Raspberry Pi crashes.
   \item The cart shall detect and stop for obstacles lower than 20\,cm from the floor (child feet, bags) using IR sensors.
   \item The system shall prevent motion when basket load exceeds 40\,kg.
-  \item If the UWB link to the user remote is lost for more than 3 seconds, the cart shall decelerate to a stop and wait.
+  \item If the UWB link to the user remote is lost for more than 5 seconds, the cart shall decelerate to a stop and revert to IDLE mode.
   \item The cart shall not operate on slopes greater than 10° without triggering a low-speed safe mode.
   \item All exposed electrical components shall be rated IP42 minimum for indoor retail environments.
 \end{itemize}
@@ -61,7 +61,7 @@ setting. Reliability failures have direct business and safety consequences.
 The system must be accessible to all user classes without training,
 including elderly shoppers and those unfamiliar with technology.
 \begin{itemize}
-  \item The entire user interface shall consist of two physical buttons only (Follow and Stop) --- no touchscreen, no app, no setup.
+  \item The physical remote provides three buttons: \textbf{Follow} (activate follow-me), \textbf{Stop} (emergency stop), and \textbf{Idle} (pause and hold position) --- no touchscreen, no app, no setup.
   \item LED status colors shall follow universally recognized conventions: green = safe/active, yellow = caution, red = stop/fault.
   \item The remote shall weigh no more than 80\,g and fit comfortably in one hand.
   \item A new user shall be able to begin using the cart within 30 seconds of receiving the remote, with no instruction beyond the LED color guide on the remote lanyard.
