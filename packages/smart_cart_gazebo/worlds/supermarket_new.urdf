@@ -1,0 +1,713 @@
+<?xml version="1.0" ?>
+<!--
+  supermarket.urdf  –  Expanded realistic supermarket environment
+  Converted and enlarged from supermarket.sdf
+  
+  Layout overview (top-down, X = forward/depth, Y = lateral):
+    ┌──────────────────────────────────────────────────────┐  y= 6.5 (left wall)
+    │  [Shelf A1]  [Shelf A2]  [Shelf A3]  [Shelf A4]     │
+    │                                                       │  ← left aisle gap
+    │                    MAIN AISLE                         │  y= 0
+    │                                                       │  ← right aisle gap
+    │  [Shelf B1]  [Shelf B2]  [Shelf B3]  [Shelf B4]     │
+    └──────────────────────────────────────────────────────┘  y=-6.5 (right wall)
+    
+  Aisle between shelf rows: exactly preserved from original
+    Left shelf face:  y = 1.5 - 0.225 = 1.275
+    Right shelf face: y = -1.5 + 0.225 = -1.275
+    Clear gap = 2.55 m  (same as original)
+    
+  Person/actor spawned separately – not included here.
+-->
+<robot name="supermarket">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       WORLD LINK  (static anchor)
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <link name="world"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       GROUND PLANE
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <link name="ground_plane">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="32 14 0.02"/>
+      </geometry>
+      <material name="floor_tile">
+        <!-- Light grey / cream vinyl tile -->
+        <color rgba="0.88 0.87 0.84 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="32 14 0.02"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="100000"/>
+      <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+  </link>
+
+  <joint name="ground_joint" type="fixed">
+    <parent link="world"/>
+    <child link="ground_plane"/>
+    <!-- Centre at x=14 = midpoint of [-2, 30]; y=0; just below z=0 -->
+    <origin xyz="14.0 0 -0.01" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       WALLS
+       Building footprint: X ∈ [-1, 29]  Y ∈ [-7, 7]  Z ∈ [0, 3.5]
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Left wall (y = +7) -->
+  <link name="left_wall">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="30 0.2 3.5"/></geometry>
+      <material name="wall_mat"><color rgba="0.90 0.90 0.88 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="30 0.2 3.5"/></geometry>
+    </collision>
+    <inertial><mass value="10000"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="left_wall_joint" type="fixed">
+    <parent link="world"/>
+    <child link="left_wall"/>
+    <origin xyz="14 7.0 1.75" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Right wall (y = -7) -->
+  <link name="right_wall">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="30 0.2 3.5"/></geometry>
+      <material name="wall_mat"><color rgba="0.90 0.90 0.88 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="30 0.2 3.5"/></geometry>
+    </collision>
+    <inertial><mass value="10000"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="right_wall_joint" type="fixed">
+    <parent link="world"/>
+    <child link="right_wall"/>
+    <origin xyz="14 -7.0 1.75" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Back wall (x = 29) -->
+  <link name="back_wall">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.2 14.4 3.5"/></geometry>
+      <material name="wall_mat"><color rgba="0.90 0.90 0.88 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.2 14.4 3.5"/></geometry>
+    </collision>
+    <inertial><mass value="10000"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="back_wall_joint" type="fixed">
+    <parent link="world"/>
+    <child link="back_wall"/>
+    <origin xyz="29.0 0 1.75" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Front wall (x = -1) – left portion (entrance gap in middle) -->
+  <link name="front_wall_left">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.2 5.2 3.5"/></geometry>
+      <material name="wall_mat"><color rgba="0.90 0.90 0.88 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.2 5.2 3.5"/></geometry>
+    </collision>
+    <inertial><mass value="10000"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="front_wall_left_joint" type="fixed">
+    <parent link="world"/>
+    <child link="front_wall_left"/>
+    <origin xyz="-1.0 4.4 1.75" rpy="0 0 0"/>
+  </joint>
+
+  <link name="front_wall_right">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.2 5.2 3.5"/></geometry>
+      <material name="wall_mat"><color rgba="0.90 0.90 0.88 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.2 5.2 3.5"/></geometry>
+    </collision>
+    <inertial><mass value="10000"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="front_wall_right_joint" type="fixed">
+    <parent link="world"/>
+    <child link="front_wall_right"/>
+    <origin xyz="-1.0 -4.4 1.75" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SHELF MACRO LAYOUT
+       
+       Shelf unit dimensions (same depth as original, just taller + longer):
+         size: 4.0 (length along X) × 0.45 (depth Y) × 1.8 (height Z)
+       
+       Left row:  y = +1.5   (face at y=1.275, same as original)
+       Right row: y = -1.5   (face at y=-1.275, same as original)
+       
+       4 shelf units per row, spaced 5.0 m apart (with 1.0 m cross-aisle gap)
+       Rows: A (x≈3.5), B (x≈8.5), C (x≈13.5), D (x≈18.5), E (x≈23.5)
+       
+       Each shelf unit has 3 visible shelf boards inside it.
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- ────────────────────────────────────────────────────────────────────
+       ROW A  (x = 3.5)  — Bakery / Bread
+  ──────────────────────────────────────────────────────────────────── -->
+
+  <!-- A-Left shelf body -->
+  <link name="shelf_A_left">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="4.0 0.45 1.8"/></geometry>
+      <material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="4.0 0.45 1.8"/></geometry>
+    </collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_A_left_joint" type="fixed">
+    <parent link="world"/>
+    <child link="shelf_A_left"/>
+    <origin xyz="3.5 1.5 0.9" rpy="0 0 0"/>
+  </joint>
+
+  <!-- A-Left shelf boards (3 levels) -->
+  <link name="shelf_A_left_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_A_left_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_A_left_b1"/><origin xyz="3.5 1.5 0.40" rpy="0 0 0"/></joint>
+
+  <link name="shelf_A_left_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_A_left_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_A_left_b2"/><origin xyz="3.5 1.5 0.85" rpy="0 0 0"/></joint>
+
+  <link name="shelf_A_left_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_A_left_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_A_left_b3"/><origin xyz="3.5 1.5 1.30" rpy="0 0 0"/></joint>
+
+  <!-- A-Right shelf body -->
+  <link name="shelf_A_right">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="4.0 0.45 1.8"/></geometry>
+      <material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="4.0 0.45 1.8"/></geometry>
+    </collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_A_right_joint" type="fixed">
+    <parent link="world"/>
+    <child link="shelf_A_right"/>
+    <origin xyz="3.5 -1.5 0.9" rpy="0 0 0"/>
+  </joint>
+
+  <link name="shelf_A_right_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_A_right_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_A_right_b1"/><origin xyz="3.5 -1.5 0.40" rpy="0 0 0"/></joint>
+
+  <link name="shelf_A_right_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_A_right_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_A_right_b2"/><origin xyz="3.5 -1.5 0.85" rpy="0 0 0"/></joint>
+
+  <link name="shelf_A_right_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_A_right_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_A_right_b3"/><origin xyz="3.5 -1.5 1.30" rpy="0 0 0"/></joint>
+
+  <!-- ────────────────────────────────────────────────────────────────────
+       ROW B  (x = 8.5)  — Canned Goods / Dry Foods
+  ──────────────────────────────────────────────────────────────────── -->
+
+  <link name="shelf_B_left">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_B_left_joint" type="fixed"><parent link="world"/><child link="shelf_B_left"/><origin xyz="8.5 1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_B_left_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_B_left_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_B_left_b1"/><origin xyz="8.5 1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_B_left_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_B_left_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_B_left_b2"/><origin xyz="8.5 1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_B_left_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_B_left_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_B_left_b3"/><origin xyz="8.5 1.5 1.30" rpy="0 0 0"/></joint>
+
+  <link name="shelf_B_right">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_B_right_joint" type="fixed"><parent link="world"/><child link="shelf_B_right"/><origin xyz="8.5 -1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_B_right_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_B_right_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_B_right_b1"/><origin xyz="8.5 -1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_B_right_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_B_right_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_B_right_b2"/><origin xyz="8.5 -1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_B_right_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_B_right_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_B_right_b3"/><origin xyz="8.5 -1.5 1.30" rpy="0 0 0"/></joint>
+
+  <!-- ────────────────────────────────────────────────────────────────────
+       ROW C  (x = 13.5)  — Beverages / Juices
+  ──────────────────────────────────────────────────────────────────── -->
+
+  <link name="shelf_C_left">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_C_left_joint" type="fixed"><parent link="world"/><child link="shelf_C_left"/><origin xyz="13.5 1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_C_left_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_C_left_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_C_left_b1"/><origin xyz="13.5 1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_C_left_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_C_left_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_C_left_b2"/><origin xyz="13.5 1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_C_left_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_C_left_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_C_left_b3"/><origin xyz="13.5 1.5 1.30" rpy="0 0 0"/></joint>
+
+  <link name="shelf_C_right">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_C_right_joint" type="fixed"><parent link="world"/><child link="shelf_C_right"/><origin xyz="13.5 -1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_C_right_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_C_right_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_C_right_b1"/><origin xyz="13.5 -1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_C_right_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_C_right_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_C_right_b2"/><origin xyz="13.5 -1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_C_right_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_C_right_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_C_right_b3"/><origin xyz="13.5 -1.5 1.30" rpy="0 0 0"/></joint>
+
+  <!-- ────────────────────────────────────────────────────────────────────
+       ROW D  (x = 18.5)  — Personal Care / Household
+  ──────────────────────────────────────────────────────────────────── -->
+
+  <link name="shelf_D_left">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_D_left_joint" type="fixed"><parent link="world"/><child link="shelf_D_left"/><origin xyz="18.5 1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_D_left_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_D_left_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_D_left_b1"/><origin xyz="18.5 1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_D_left_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_D_left_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_D_left_b2"/><origin xyz="18.5 1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_D_left_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_D_left_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_D_left_b3"/><origin xyz="18.5 1.5 1.30" rpy="0 0 0"/></joint>
+
+  <link name="shelf_D_right">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_D_right_joint" type="fixed"><parent link="world"/><child link="shelf_D_right"/><origin xyz="18.5 -1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_D_right_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_D_right_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_D_right_b1"/><origin xyz="18.5 -1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_D_right_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_D_right_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_D_right_b2"/><origin xyz="18.5 -1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_D_right_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_D_right_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_D_right_b3"/><origin xyz="18.5 -1.5 1.30" rpy="0 0 0"/></joint>
+
+  <!-- ────────────────────────────────────────────────────────────────────
+       ROW E  (x = 23.5)  — Frozen / Dairy (end caps)
+  ──────────────────────────────────────────────────────────────────── -->
+
+  <link name="shelf_E_left">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_E_left_joint" type="fixed"><parent link="world"/><child link="shelf_E_left"/><origin xyz="23.5 1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_E_left_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_E_left_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_E_left_b1"/><origin xyz="23.5 1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_E_left_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_E_left_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_E_left_b2"/><origin xyz="23.5 1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_E_left_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_E_left_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_E_left_b3"/><origin xyz="23.5 1.5 1.30" rpy="0 0 0"/></joint>
+
+  <link name="shelf_E_right">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry><material name="shelf_wood"><color rgba="0.60 0.42 0.20 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.45 1.8"/></geometry></collision>
+    <inertial><mass value="200"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="shelf_E_right_joint" type="fixed"><parent link="world"/><child link="shelf_E_right"/><origin xyz="23.5 -1.5 0.9" rpy="0 0 0"/></joint>
+
+  <link name="shelf_E_right_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_E_right_b1_jnt" type="fixed"><parent link="world"/><child link="shelf_E_right_b1"/><origin xyz="23.5 -1.5 0.40" rpy="0 0 0"/></joint>
+  <link name="shelf_E_right_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_E_right_b2_jnt" type="fixed"><parent link="world"/><child link="shelf_E_right_b2"/><origin xyz="23.5 -1.5 0.85" rpy="0 0 0"/></joint>
+  <link name="shelf_E_right_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="4.0 0.46 0.03"/></geometry><material name="shelf_board"><color rgba="0.75 0.55 0.28 1"/></material></visual></link>
+  <joint name="shelf_E_right_b3_jnt" type="fixed"><parent link="world"/><child link="shelf_E_right_b3"/><origin xyz="23.5 -1.5 1.30" rpy="0 0 0"/></joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       WALL-SIDE PERIMETER SHELVES  (along left & right walls)
+       These run parallel to X, up against the walls at y ≈ ±6.3
+       Height: 2.0 m (taller, like a cooler/refrigerated wall unit)
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Left perimeter shelf (y = 6.3, facing inward) -->
+  <link name="perimeter_shelf_left">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.4 2.0"/></geometry><material name="perimeter_shelf_mat"><color rgba="0.50 0.50 0.55 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.4 2.0"/></geometry></collision>
+    <inertial><mass value="500"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="perimeter_shelf_left_joint" type="fixed">
+    <parent link="world"/><child link="perimeter_shelf_left"/>
+    <origin xyz="13.0 6.3 1.0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Left perimeter boards -->
+  <link name="perim_left_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.41 0.03"/></geometry><material name="shelf_board"><color rgba="0.70 0.70 0.75 1"/></material></visual></link>
+  <joint name="perim_left_b1_jnt" type="fixed"><parent link="world"/><child link="perim_left_b1"/><origin xyz="13.0 6.3 0.45" rpy="0 0 0"/></joint>
+  <link name="perim_left_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.41 0.03"/></geometry><material name="shelf_board"><color rgba="0.70 0.70 0.75 1"/></material></visual></link>
+  <joint name="perim_left_b2_jnt" type="fixed"><parent link="world"/><child link="perim_left_b2"/><origin xyz="13.0 6.3 0.95" rpy="0 0 0"/></joint>
+  <link name="perim_left_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.41 0.03"/></geometry><material name="shelf_board"><color rgba="0.70 0.70 0.75 1"/></material></visual></link>
+  <joint name="perim_left_b3_jnt" type="fixed"><parent link="world"/><child link="perim_left_b3"/><origin xyz="13.0 6.3 1.45" rpy="0 0 0"/></joint>
+
+  <!-- Right perimeter shelf (y = -6.3) -->
+  <link name="perimeter_shelf_right">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.4 2.0"/></geometry><material name="perimeter_shelf_mat"><color rgba="0.50 0.50 0.55 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.4 2.0"/></geometry></collision>
+    <inertial><mass value="500"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="perimeter_shelf_right_joint" type="fixed">
+    <parent link="world"/><child link="perimeter_shelf_right"/>
+    <origin xyz="13.0 -6.3 1.0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="perim_right_b1"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.41 0.03"/></geometry><material name="shelf_board"><color rgba="0.70 0.70 0.75 1"/></material></visual></link>
+  <joint name="perim_right_b1_jnt" type="fixed"><parent link="world"/><child link="perim_right_b1"/><origin xyz="13.0 -6.3 0.45" rpy="0 0 0"/></joint>
+  <link name="perim_right_b2"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.41 0.03"/></geometry><material name="shelf_board"><color rgba="0.70 0.70 0.75 1"/></material></visual></link>
+  <joint name="perim_right_b2_jnt" type="fixed"><parent link="world"/><child link="perim_right_b2"/><origin xyz="13.0 -6.3 0.95" rpy="0 0 0"/></joint>
+  <link name="perim_right_b3"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="26 0.41 0.03"/></geometry><material name="shelf_board"><color rgba="0.70 0.70 0.75 1"/></material></visual></link>
+  <joint name="perim_right_b3_jnt" type="fixed"><parent link="world"/><child link="perim_right_b3"/><origin xyz="13.0 -6.3 1.45" rpy="0 0 0"/></joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       CHECKOUT COUNTERS  (near entrance, x ≈ 1.0–2.5)
+       3 counters side by side along Y
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Counter 1 -->
+  <link name="checkout_1">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="1.5 0.7 0.9"/></geometry><material name="counter_mat"><color rgba="0.85 0.85 0.85 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="1.5 0.7 0.9"/></geometry></collision>
+    <inertial><mass value="80"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="checkout_1_joint" type="fixed">
+    <parent link="world"/><child link="checkout_1"/>
+    <origin xyz="1.5 3.5 0.45" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Counter 2 -->
+  <link name="checkout_2">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="1.5 0.7 0.9"/></geometry><material name="counter_mat"><color rgba="0.85 0.85 0.85 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="1.5 0.7 0.9"/></geometry></collision>
+    <inertial><mass value="80"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="checkout_2_joint" type="fixed">
+    <parent link="world"/><child link="checkout_2"/>
+    <origin xyz="1.5 1.8 0.45" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Counter 3 -->
+  <link name="checkout_3">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="1.5 0.7 0.9"/></geometry><material name="counter_mat"><color rgba="0.85 0.85 0.85 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="1.5 0.7 0.9"/></geometry></collision>
+    <inertial><mass value="80"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="checkout_3_joint" type="fixed">
+    <parent link="world"/><child link="checkout_3"/>
+    <origin xyz="1.5 -1.8 0.45" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SHOPPING CARTS (static props near entrance)
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Cart body 1 -->
+  <link name="cart_1_body">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.55 0.35 0.55"/></geometry><material name="cart_mat"><color rgba="0.80 0.80 0.80 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.55 0.35 0.55"/></geometry></collision>
+    <inertial><mass value="10"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="cart_1_joint" type="fixed">
+    <parent link="world"/><child link="cart_1_body"/>
+    <origin xyz="0.5 5.0 0.52" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Cart 2 -->
+  <link name="cart_2_body">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.55 0.35 0.55"/></geometry><material name="cart_mat"><color rgba="0.80 0.80 0.80 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.55 0.35 0.55"/></geometry></collision>
+    <inertial><mass value="10"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="cart_2_joint" type="fixed">
+    <parent link="world"/><child link="cart_2_body"/>
+    <origin xyz="0.5 5.65 0.52" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Cart 3 -->
+  <link name="cart_3_body">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.55 0.35 0.55"/></geometry><material name="cart_mat"><color rgba="0.80 0.80 0.80 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.55 0.35 0.55"/></geometry></collision>
+    <inertial><mass value="10"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="cart_3_joint" type="fixed">
+    <parent link="world"/><child link="cart_3_body"/>
+    <origin xyz="0.5 4.35 0.52" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       PRODUCE DISPLAY TABLES  (open-top tables for fruit & veg, x ≈ 6-7)
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Produce table left -->
+  <link name="produce_table_left">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="2.0 1.2 0.85"/></geometry><material name="produce_mat"><color rgba="0.40 0.65 0.30 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="2.0 1.2 0.85"/></geometry></collision>
+    <inertial><mass value="60"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="produce_table_left_joint" type="fixed">
+    <parent link="world"/><child link="produce_table_left"/>
+    <origin xyz="6.5 4.5 0.425" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Produce table right -->
+  <link name="produce_table_right">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="2.0 1.2 0.85"/></geometry><material name="produce_mat"><color rgba="0.40 0.65 0.30 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="2.0 1.2 0.85"/></geometry></collision>
+    <inertial><mass value="60"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="produce_table_right_joint" type="fixed">
+    <parent link="world"/><child link="produce_table_right"/>
+    <origin xyz="6.5 -4.5 0.425" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       REFRIGERATED COOLER UNITS (back wall area, x ≈ 26-28)
+       Glass-door style upright coolers
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Cooler unit 1 -->
+  <link name="cooler_1">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.8 3.5 2.2"/></geometry><material name="cooler_mat"><color rgba="0.78 0.88 0.92 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.8 3.5 2.2"/></geometry></collision>
+    <inertial><mass value="300"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="cooler_1_joint" type="fixed">
+    <parent link="world"/><child link="cooler_1"/>
+    <origin xyz="27.6 4.75 1.1" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Cooler unit 2 -->
+  <link name="cooler_2">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.8 3.5 2.2"/></geometry><material name="cooler_mat"><color rgba="0.78 0.88 0.92 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.8 3.5 2.2"/></geometry></collision>
+    <inertial><mass value="300"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="cooler_2_joint" type="fixed">
+    <parent link="world"/><child link="cooler_2"/>
+    <origin xyz="27.6 0.0 1.1" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Cooler unit 3 -->
+  <link name="cooler_3">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.8 3.5 2.2"/></geometry><material name="cooler_mat"><color rgba="0.78 0.88 0.92 1"/></material></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.8 3.5 2.2"/></geometry></collision>
+    <inertial><mass value="300"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="cooler_3_joint" type="fixed">
+    <parent link="world"/><child link="cooler_3"/>
+    <origin xyz="27.6 -4.75 1.1" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       ORIGINAL MID-AISLE OBSTACLE BOX  (position preserved from original SDF)
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <link name="obstacle_box">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.3 0.3 0.5"/></geometry>
+      <material name="obstacle_mat"><color rgba="0.88 0.50 0.12 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.3 0.3 0.5"/></geometry>
+    </collision>
+    <inertial><mass value="5"/><inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/></inertial>
+  </link>
+  <joint name="obstacle_box_joint" type="fixed">
+    <parent link="world"/>
+    <child link="obstacle_box"/>
+    <origin xyz="2.0 0.6 0.25" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       CART PARKING AREA  –  floor markings only (paint lines, z≈0)
+       
+       Located between checkout_3 (centre y=-1.8, edge at y≈-2.15)
+       and perimeter_shelf_right (centre y=-6.3, face at y≈-5.9)
+       
+       Zone:  x ∈ [0.5, 2.5]  (2.0 m, aligned with checkouts)
+              y ∈ [-5.7, -2.3]  (3.4 m wide, clear of both objects)
+       Centre: x=1.5, y=-4.0
+       
+       All marks: bright yellow  rgba="0.98 0.85 0.10 1"
+       Thickness: 0.002 m (flush on floor surface)
+  ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- ── Outer border: top edge (y = -2.3) -->
+  <link name="cart_zone_border_top">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="2.04 0.06 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_zone_border_top_jnt" type="fixed">
+    <parent link="world"/><child link="cart_zone_border_top"/>
+    <origin xyz="1.5 -2.3 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Outer border: bottom edge (y = -5.7) -->
+  <link name="cart_zone_border_bottom">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="2.04 0.06 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_zone_border_bottom_jnt" type="fixed">
+    <parent link="world"/><child link="cart_zone_border_bottom"/>
+    <origin xyz="1.5 -5.7 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Outer border: left edge (x = 0.5) -->
+  <link name="cart_zone_border_left">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.06 3.46 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_zone_border_left_jnt" type="fixed">
+    <parent link="world"/><child link="cart_zone_border_left"/>
+    <origin xyz="0.5 -4.0 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Outer border: right edge (x = 2.5) -->
+  <link name="cart_zone_border_right">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.06 3.46 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_zone_border_right_jnt" type="fixed">
+    <parent link="world"/><child link="cart_zone_border_right"/>
+    <origin xyz="2.5 -4.0 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Stall divider lines (4 internal lines parallel to X)
+       Zone Y width = 3.4 m / 5 slots = 0.68 m each
+       Lines at y = -2.98, -3.66, -4.34, -5.02 -->
+
+  <link name="cart_divider_1">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="2.0 0.04 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_divider_1_jnt" type="fixed">
+    <parent link="world"/><child link="cart_divider_1"/>
+    <origin xyz="1.5 -2.98 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <link name="cart_divider_2">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="2.0 0.04 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_divider_2_jnt" type="fixed">
+    <parent link="world"/><child link="cart_divider_2"/>
+    <origin xyz="1.5 -3.66 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <link name="cart_divider_3">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="2.0 0.04 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_divider_3_jnt" type="fixed">
+    <parent link="world"/><child link="cart_divider_3"/>
+    <origin xyz="1.5 -4.34 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <link name="cart_divider_4">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="2.0 0.04 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_divider_4_jnt" type="fixed">
+    <parent link="world"/><child link="cart_divider_4"/>
+    <origin xyz="1.5 -5.02 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Direction arrow at zone centre (pointing +X, into the zone) -->
+  <!-- Shaft -->
+  <link name="cart_arrow_shaft">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.80 0.08 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_arrow_shaft_jnt" type="fixed">
+    <parent link="world"/><child link="cart_arrow_shaft"/>
+    <origin xyz="1.5 -4.0 0.002" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Arrow head left flank (rotated +35 deg) -->
+  <link name="cart_arrow_head_l">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.28 0.07 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_arrow_head_l_jnt" type="fixed">
+    <parent link="world"/><child link="cart_arrow_head_l"/>
+    <origin xyz="1.82 -3.88 0.002" rpy="0 0 0.610"/>
+  </joint>
+
+  <!-- Arrow head right flank (rotated -35 deg) -->
+  <link name="cart_arrow_head_r">
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.28 0.07 0.002"/></geometry>
+      <material name="yellow_line"><color rgba="0.98 0.85 0.10 1"/></material>
+    </visual>
+  </link>
+  <joint name="cart_arrow_head_r_jnt" type="fixed">
+    <parent link="world"/><child link="cart_arrow_head_r"/>
+    <origin xyz="1.82 -4.12 0.002" rpy="0 0 -0.610"/>
+  </joint>
+
+</robot>

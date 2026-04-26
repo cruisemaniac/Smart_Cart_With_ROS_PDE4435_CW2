@@ -2,44 +2,99 @@
 <robot name="smart_cart" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- ================================================ -->
-  <!-- PROPERTIES – from CW1 Hardware Spec              -->
+  <!-- PROPERTIES                                       -->
+  <!-- Physics: v1 proven values (separation, radius)   -->
+  <!-- Visual: v2 realistic design                      -->
   <!-- ================================================ -->
+
+  <!-- Base chassis – v1 dimensions that work with diff-drive -->
   <xacro:property name="cart_length"  value="0.70"/>
   <xacro:property name="cart_width"   value="0.50"/>
   <xacro:property name="cart_height"  value="0.35"/>
   <xacro:property name="cart_mass"    value="15.0"/>
+
+  <!-- Wheels – v1 proven physics values -->
   <xacro:property name="wheel_radius" value="0.075"/>
   <xacro:property name="wheel_width"  value="0.04"/>
   <xacro:property name="wheel_mass"   value="0.5"/>
 
+  <!-- Basket / Handle – visual only, no mass to avoid CoM instability -->
+  <xacro:property name="basket_length" value="0.55"/>
+  <xacro:property name="basket_width"  value="0.35"/>
+  <xacro:property name="basket_height" value="0.40"/>
+
+  <xacro:property name="handle_length" value="0.38"/>
+  <xacro:property name="handle_radius" value="0.012"/>
+
+  <!-- UWB beacon -->
+  <xacro:property name="uwb_ball_r"   value="0.028"/>
+
+  <!-- LiDAR -->
+  <xacro:property name="lidar_radius" value="0.040"/>
+  <xacro:property name="lidar_height" value="0.050"/>
+
   <!-- ================================================ -->
   <!-- MATERIALS                                        -->
   <!-- ================================================ -->
-  <material name="blue_cart">
-    <color rgba="0.2 0.4 0.8 1.0"/>
+  <material name="steel_blue_grey">
+    <color rgba="0.48 0.56 0.65 1.0"/>
   </material>
-  <material name="black_wheel">
-    <color rgba="0.1 0.1 0.1 1.0"/>
+  <material name="rubber_black">
+    <color rgba="0.10 0.10 0.10 1.0"/>
   </material>
-  <material name="grey_sensor">
-    <color rgba="0.6 0.6 0.6 1.0"/>
+  <material name="stainless_steel">
+    <color rgba="0.80 0.82 0.84 1.0"/>
   </material>
   <material name="cyan_uwb">
-    <color rgba="0.0 1.0 1.0 1.0"/>
+    <color rgba="0.05 0.78 0.72 1.0"/>
+  </material>
+  <material name="dark_grey">
+    <color rgba="0.30 0.30 0.32 1.0"/>
+  </material>
+  <material name="grey_sensor">
+    <color rgba="0.55 0.55 0.55 1.0"/>
+  </material>
+  <material name="screen_dark">
+    <color rgba="0.08 0.10 0.12 1.0"/>
   </material>
 
   <!-- ================================================ -->
   <!-- BASE LINK                                        -->
   <!-- ================================================ -->
   <link name="base_link">
+    <!-- Main chassis body -->
     <visual>
-      <!-- <origin xyz="0 0 0" rpy="0 0 3.14159"/> -->
-      <origin xyz="0 0 0" rpy="0 0 0.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <box size="${cart_length} ${cart_width} ${cart_height}"/>
       </geometry>
-      <material name="blue_cart"/>
+      <material name="steel_blue_grey"/>
     </visual>
+    <!-- Top plate -->
+    <visual>
+      <origin xyz="0 0 ${cart_height/2 + 0.005}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${cart_length - 0.02} ${cart_width - 0.02} 0.010"/>
+      </geometry>
+      <material name="steel_blue_grey"/>
+    </visual>
+    <!-- Front panel detail -->
+    <visual>
+      <origin xyz="${cart_length/2 - 0.005} 0 0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.010 ${cart_width - 0.06} 0.08"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <!-- Rear panel detail -->
+    <visual>
+      <origin xyz="${-(cart_length/2 - 0.005)} 0 0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.010 ${cart_width - 0.06} 0.08"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+
     <collision>
       <geometry>
         <box size="${cart_length} ${cart_width} ${cart_height}"/>
@@ -55,25 +110,36 @@
     </inertial>
   </link>
 
-  <!-- base_footprint for Nav2 compatibility -->
-  <!-- <link name="base_footprint"/>
-  <joint name="base_footprint_joint" type="fixed">
-    <parent link="base_footprint"/>
-    <child  link="base_link"/>
-    <origin xyz="0 0 0.175" rpy="0 0 0"/>
-  </joint> -->
-
   <!-- ================================================ -->
-  <!-- OMNI WHEEL MACRO                                 -->
+  <!-- WHEEL MACRO – v1 joint convention (proven)       -->
+  <!-- Joint rpy="1.5708 0 0" + axis="0 0 -1"          -->
+  <!-- Visual has multi-layer design but NO origin rpy  -->
+  <!-- (joint rpy handles the horizontal orientation)   -->
   <!-- ================================================ -->
   <xacro:macro name="omni_wheel" params="name x y z">
     <link name="${name}_wheel">
+      <!-- Outer tyre ring -->
       <visual>
         <geometry>
           <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
         </geometry>
-        <material name="black_wheel"/>
+        <material name="rubber_black"/>
       </visual>
+      <!-- Hub cap disc -->
+      <visual>
+        <geometry>
+          <cylinder radius="${wheel_radius * 0.45}" length="${wheel_width + 0.004}"/>
+        </geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <!-- Centre axle nub -->
+      <visual>
+        <geometry>
+          <cylinder radius="${wheel_radius * 0.12}" length="${wheel_width + 0.010}"/>
+        </geometry>
+        <material name="steel_blue_grey"/>
+      </visual>
+
       <collision>
         <geometry>
           <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
@@ -88,6 +154,8 @@
           ixy="0" ixz="0" iyz="0"/>
       </inertial>
     </link>
+
+    <!-- v1 joint convention: rpy on joint, axis="0 0 -1" in child frame -->
     <joint name="${name}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child  link="${name}_wheel"/>
@@ -95,6 +163,7 @@
       <axis xyz="0 0 -1"/>
       <dynamics damping="0.01" friction="0.01"/>
     </joint>
+
     <gazebo reference="${name}_wheel">
       <mu1>0.5</mu1>
       <mu2>0.05</mu2>
@@ -104,78 +173,269 @@
     </gazebo>
   </xacro:macro>
 
-  <!-- 4 wheels -->
+  <!-- v1 wheel positions -->
   <xacro:omni_wheel name="front_left"  x=" 0.25" y=" 0.27" z="-0.15"/>
   <xacro:omni_wheel name="front_right" x=" 0.25" y="-0.27" z="-0.15"/>
   <xacro:omni_wheel name="rear_left"   x="-0.25" y=" 0.27" z="-0.15"/>
   <xacro:omni_wheel name="rear_right"  x="-0.25" y="-0.27" z="-0.15"/>
 
   <!-- ================================================ -->
-  <!-- UWB ANCHOR MACRO                                 -->
-  <!-- 4 anchors at cart corners – visual only          -->
-  <!-- Real UWB trilateration handled by                -->
-  <!-- uwb_simulator_node.py using odometry data        -->
+  <!-- SHOPPING BASKET – visual only, no mass/collision  -->
   <!-- ================================================ -->
-  <xacro:macro name="uwb_anchor" params="name x y">
+  <link name="basket_link">
+    <!-- Corner posts -->
+    <visual>
+      <origin xyz="${basket_length/2} ${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.008" length="${basket_height}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="${basket_length/2} -${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.008" length="${basket_height}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="-${basket_length/2} ${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.008" length="${basket_height}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="-${basket_length/2} -${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.008" length="${basket_height}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <!-- Top rim -->
+    <visual>
+      <origin xyz="0 ${basket_width/2} ${basket_height/2}" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_length}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="0 -${basket_width/2} ${basket_height/2}" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_length}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="${basket_length/2} 0 ${basket_height/2}" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_width}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="-${basket_length/2} 0 ${basket_height/2}" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_width}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <!-- Bottom frame -->
+    <visual>
+      <origin xyz="0 ${basket_width/2} -${basket_height/2}" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_length}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="0 -${basket_width/2} -${basket_height/2}" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_length}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="${basket_length/2} 0 -${basket_height/2}" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_width}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="-${basket_length/2} 0 -${basket_height/2}" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.007" length="${basket_width}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <!-- Mid rails -->
+    <visual>
+      <origin xyz="0 ${basket_width/2} 0" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.005" length="${basket_length}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="0 -${basket_width/2} 0" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.005" length="${basket_length}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="${basket_length/2} 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.005" length="${basket_width}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <visual>
+      <origin xyz="-${basket_length/2} 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.005" length="${basket_width}"/></geometry>
+      <material name="stainless_steel"/>
+    </visual>
+    <!-- Side wires (left) -->
+    <visual><origin xyz="-0.22 ${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="-0.11 ${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="0.00 ${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="0.11 ${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="0.22 ${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <!-- Side wires (right) -->
+    <visual><origin xyz="-0.22 -${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="-0.11 -${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="0.00 -${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="0.11 -${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
+    <visual><origin xyz="0.22 -${basket_width/2} 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
 
-    <link name="${name}_uwb_anchor">
+    <!-- No collision, no inertial – purely decorative -->
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.000001" iyy="0.000001" izz="0.000001"
+               ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
 
-      <!-- Anchor housing – small grey box -->
+  <joint name="basket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="basket_link"/>
+    <origin xyz="-0.02 0 ${cart_height/2 + basket_height/2}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ================================================ -->
+  <!-- HANDLE BAR – visual only, no mass/collision      -->
+  <!-- ================================================ -->
+  <link name="handle_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${handle_radius}" length="${handle_length}"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <visual>
+      <origin xyz="0 ${handle_length/2 - 0.01} -0.06" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${handle_radius}" length="0.12"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <visual>
+      <origin xyz="0 -${handle_length/2 - 0.01} -0.06" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${handle_radius}" length="0.12"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <!-- Screen tablet -->
+    <visual>
+      <origin xyz="0.04 0 0.04" rpy="0 -0.35 0"/>
+      <geometry>
+        <box size="0.010 0.130 0.090"/>
+      </geometry>
+      <material name="screen_dark"/>
+    </visual>
+    <visual>
+      <origin xyz="0.041 0 0.04" rpy="0 -0.35 0"/>
+      <geometry>
+        <box size="0.008 0.140 0.100"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.000001" iyy="0.000001" izz="0.000001"
+               ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="handle_joint" type="fixed">
+    <parent link="basket_link"/>
+    <child  link="handle_link"/>
+    <origin xyz="-${basket_length/2 - 0.02} 0 ${basket_height/2 + 0.06}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ================================================ -->
+  <!-- UWB ANCHORS – v2 visual design, v1 positions    -->
+  <!-- ================================================ -->
+  <xacro:macro name="uwb_beacon" params="name x y">
+    <link name="${name}_uwb_link">
+      <!-- Mounting stud -->
       <visual>
-        <geometry>
-          <box size="0.04 0.04 0.03"/>
-        </geometry>
-        <material name="grey_sensor"/>
+        <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.012" length="0.030"/></geometry>
+        <material name="dark_grey"/>
       </visual>
-
-      <!-- Cyan glow sphere – indicates active UWB signal -->
+      <!-- Beacon sphere -->
       <visual>
-        <origin xyz="0 0 0.03" rpy="0 0 0"/>
-        <geometry>
-          <sphere radius="0.025"/>
-        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><sphere radius="${uwb_ball_r}"/></geometry>
         <material name="cyan_uwb"/>
       </visual>
-
+      <!-- Chrome ring -->
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><cylinder radius="${uwb_ball_r + 0.003}" length="0.008"/></geometry>
+        <material name="stainless_steel"/>
+      </visual>
       <inertial>
         <mass value="0.05"/>
         <inertia ixx="0.00001" iyy="0.00001" izz="0.00001"
                  ixy="0" ixz="0" iyz="0"/>
       </inertial>
-
     </link>
-
     <joint name="${name}_uwb_joint" type="fixed">
       <parent link="base_link"/>
-      <child  link="${name}_uwb_anchor"/>
-      <!-- Mounted at top corners of cart body -->
+      <child  link="${name}_uwb_link"/>
       <origin xyz="${x} ${y} 0.19" rpy="0 0 0"/>
     </joint>
-
-    <!-- Gazebo: make the glow emissive so it's visible -->
-    <gazebo reference="${name}_uwb_anchor">
+    <gazebo reference="${name}_uwb_link">
       <material>Gazebo/Cyan</material>
+      <emissive>0 0.8 0.8 1</emissive>
     </gazebo>
-
   </xacro:macro>
 
-  <!-- 4 UWB anchors at cart corners -->
-  <!-- FL = front-left, FR = front-right, RL = rear-left, RR = rear-right -->
-  <xacro:uwb_anchor name="uwb_fl" x=" 0.32" y=" 0.23"/>
-  <xacro:uwb_anchor name="uwb_fr" x=" 0.32" y="-0.23"/>
-  <xacro:uwb_anchor name="uwb_rl" x="-0.32" y=" 0.23"/>
-  <xacro:uwb_anchor name="uwb_rr" x="-0.32" y="-0.23"/>
+  <!-- v1 anchor positions -->
+  <xacro:uwb_beacon name="uwb_fl" x=" 0.32" y=" 0.23"/>
+  <xacro:uwb_beacon name="uwb_fr" x=" 0.32" y="-0.23"/>
+  <xacro:uwb_beacon name="uwb_rl" x="-0.32" y=" 0.23"/>
+  <xacro:uwb_beacon name="uwb_rr" x="-0.32" y="-0.23"/>
 
   <!-- ================================================ -->
-  <!-- 2D LIDAR – RPLIDAR A1                           -->
+  <!-- 2D LIDAR – v2 visual, v1 position               -->
   <!-- ================================================ -->
   <link name="lidar_link">
+    <!-- Housing ring -->
     <visual>
-      <geometry><cylinder radius="0.04" length="0.05"/></geometry>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${lidar_radius + 0.008}" length="0.020"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <!-- Sensor drum -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
       <material name="grey_sensor"/>
     </visual>
+    <!-- Lens cap -->
+    <visual>
+      <origin xyz="0 0 ${lidar_height/2 + 0.006}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${lidar_radius - 0.008}" length="0.012"/>
+      </geometry>
+      <material name="screen_dark"/>
+    </visual>
     <collision>
-      <geometry><cylinder radius="0.04" length="0.05"/></geometry>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
     </collision>
     <inertial>
       <mass value="0.17"/>
@@ -184,6 +444,7 @@
     </inertial>
   </link>
 
+  <!-- v1 LiDAR position: above base top, clear of basket -->
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child  link="lidar_link"/>
@@ -221,68 +482,25 @@
   </gazebo>
 
   <!-- ================================================ -->
-  <!-- DEPTH CAMERA – Intel RealSense D435             -->
-  <!-- ================================================ -->
-  <link name="camera_link">
-    <visual>
-      <geometry><box size="0.025 0.09 0.025"/></geometry>
-      <material name="grey_sensor"/>
-    </visual>
-    <collision>
-      <geometry><box size="0.025 0.09 0.025"/></geometry>
-    </collision>
-    <inertial>
-      <mass value="0.072"/>
-      <inertia ixx="0.0001" iyy="0.0001" izz="0.0001"
-               ixy="0" ixz="0" iyz="0"/>
-    </inertial>
-  </link>
-
-  <joint name="camera_joint" type="fixed">
-    <parent link="base_link"/>
-    <child  link="camera_link"/>
-    <origin xyz="0.35 0 0.20" rpy="0 0.15 0"/>
-  </joint>
-
-  <link name="camera_optical_link"/>
-  <joint name="camera_optical_joint" type="fixed">
-    <parent link="camera_link"/>
-    <child  link="camera_optical_link"/>
-    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
-  </joint>
-
-  <gazebo reference="camera_link">
-    <sensor name="depth_camera" type="depth_camera">
-      <gz_frame_id>camera_optical_link</gz_frame_id>
-      <topic>camera</topic>
-      <update_rate>15</update_rate>
-      <always_on>true</always_on>
-      <visualize>false</visualize>
-      <camera>
-        <horizontal_fov>1.5708</horizontal_fov>
-        <image>
-          <width>320</width>
-          <height>240</height>
-          <format>R8G8B8</format>
-        </image>
-        <clip><near>0.1</near><far>10.0</far></clip>
-        <noise>
-          <type>gaussian</type>
-          <mean>0.0</mean>
-          <stddev>0.007</stddev>
-        </noise>
-      </camera>
-    </sensor>
-  </gazebo>
-
-  <!-- ================================================ -->
-  <!-- ULTRASONIC SENSORS – HC-SR04 (2x front)         -->
+  <!-- ULTRASONIC SENSORS – v2 visual, v1 position     -->
   <!-- ================================================ -->
   <xacro:macro name="ultrasonic" params="name y_offset">
     <link name="${name}_us_link">
+      <!-- Housing block -->
       <visual>
-        <geometry><box size="0.015 0.015 0.012"/></geometry>
+        <geometry><box size="0.018 0.018 0.014"/></geometry>
         <material name="grey_sensor"/>
+      </visual>
+      <!-- HC-SR04 twin emitters -->
+      <visual>
+        <origin xyz="0.008  0.004 0" rpy="0 1.5708 0"/>
+        <geometry><cylinder radius="0.005" length="0.006"/></geometry>
+        <material name="screen_dark"/>
+      </visual>
+      <visual>
+        <origin xyz="0.008 -0.004 0" rpy="0 1.5708 0"/>
+        <geometry><cylinder radius="0.005" length="0.006"/></geometry>
+        <material name="screen_dark"/>
       </visual>
       <inertial>
         <mass value="0.009"/>
@@ -293,6 +511,7 @@
     <joint name="${name}_us_joint" type="fixed">
       <parent link="base_link"/>
       <child  link="${name}_us_link"/>
+      <!-- v1 position -->
       <origin xyz="0.36 ${y_offset} 0.05" rpy="0 0 0"/>
     </joint>
     <gazebo reference="${name}_us_link">
@@ -324,7 +543,7 @@
   <xacro:ultrasonic name="right" y_offset="-0.10"/>
 
   <!-- ================================================ -->
-  <!-- DIFFERENTIAL DRIVE PLUGIN – Gazebo Harmonic     -->
+  <!-- DIFFERENTIAL DRIVE PLUGIN – v1 proven values    -->
   <!-- ================================================ -->
   <gazebo>
     <plugin filename="gz-sim-diff-drive-system"
