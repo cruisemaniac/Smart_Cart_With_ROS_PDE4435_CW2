@@ -28,9 +28,9 @@ from launch_ros.actions import Node
 # ── Random pedestrian config — spawns are used by both Gazebo and the ROS node
 # (ns, spawn_x, spawn_y, initial_yaw)
 RANDOM_PEOPLE = [
-    ('random_person',   '0.0',  '-1.0', '1.5708'),
-    ('random_person_2', '-4.0', '0.8',  '0.0'),
-    ('random_person_3', '4.8',  '0.0',  '3.14159'),
+    ('random_person',   '0.0',  '-3.5', '1.5708'),   # right outer aisle
+    ('random_person_2', '-3.0',  '4.0', '0.0'),       # left outer area
+    ('random_person_3', '4.8',   '0.0', '3.14159'),   # main aisle (past shelf A)
 ]
 
 
@@ -87,8 +87,8 @@ def generate_launch_description():
                          'use_sim_time': True}],
         ),
 
-        # ── t=3  Spawn smart cart ────────────────────────────────────────
-        TimerAction(period=3.0, actions=[
+        # ── t=6  Spawn smart cart ────────────────────────────────────────
+        TimerAction(period=6.0, actions=[
             LogInfo(msg='[1/5] Spawning Smart Cart...'),
             Node(
                 package='ros_gz_sim', executable='create',
@@ -103,8 +103,8 @@ def generate_launch_description():
             ),
         ]),
 
-        # ── t=4  Spawn main person ───────────────────────────────────────
-        TimerAction(period=4.0, actions=[
+        # ── t=7  Spawn main person ───────────────────────────────────────
+        TimerAction(period=7.0, actions=[
             LogInfo(msg='[2/5] Spawning person actor...'),
             Node(
                 package='ros_gz_sim', executable='create',
@@ -119,8 +119,8 @@ def generate_launch_description():
             ),
         ]),
 
-        # ── t=4.5  Spawn 3 random pedestrians (same SDF, substituted name) ──
-        TimerAction(period=4.5, actions=[
+        # ── t=8  Spawn 3 random pedestrians (same SDF, substituted name) ──
+        TimerAction(period=8.0, actions=[
             LogInfo(msg='[2b/5] Spawning 3 random pedestrians...'),
             *[
                 Node(
@@ -138,8 +138,8 @@ def generate_launch_description():
             ],
         ]),
 
-        # ── t=5  ROS-Gz bridge ───────────────────────────────────────────
-        TimerAction(period=5.0, actions=[
+        # ── t=9  ROS-Gz bridge ───────────────────────────────────────────
+        TimerAction(period=9.0, actions=[
             LogInfo(msg='[3/5] Starting ROS-Gz bridge...'),
             Node(
                 package='ros_gz_bridge', executable='parameter_bridge',
@@ -148,8 +148,8 @@ def generate_launch_description():
             ),
         ]),
 
-        # ── t=6  All ROS 2 nodes ─────────────────────────────────────────
-        TimerAction(period=6.0, actions=[
+        # ── t=10  All ROS 2 nodes ────────────────────────────────────────
+        TimerAction(period=10.0, actions=[
             LogInfo(msg='[4/5] Starting all nodes...'),
 
             # Obstacle stop (safety layer)
@@ -210,8 +210,8 @@ def generate_launch_description():
             ),
         ]),
 
-        # ── t=7  RViz2 ───────────────────────────────────────────────────
-        TimerAction(period=7.0, actions=[
+        # ── t=11  RViz2 ──────────────────────────────────────────────────
+        TimerAction(period=11.0, actions=[
             Node(
                 package='rviz2', executable='rviz2', name='rviz2',
                 output='screen',
@@ -221,8 +221,8 @@ def generate_launch_description():
             ),
         ]),
 
-        # ── t=8  Instructions ────────────────────────────────────────────
-        TimerAction(period=8.0, actions=[
+        # ── t=12  Instructions ───────────────────────────────────────────
+        TimerAction(period=12.0, actions=[
             LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
             LogInfo(msg='  READY. Open a new terminal and run:'),
             LogInfo(msg='  ros2 run smart_cart_behaviour teleop_person_node'),

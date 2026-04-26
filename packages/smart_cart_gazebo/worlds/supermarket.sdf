@@ -1,8 +1,14 @@
 <?xml version="1.0" ?>
 <!--
-  supermarket.sdf  –  Static supermarket environment only
-  Person/actor is spawned separately via person_actor.sdf
-  Future dynamic background actors will also be separate SDF files
+  supermarket.sdf  –  Expanded realistic supermarket
+  World footprint: X∈[-7, 14]  Y∈[-5, 5]  (21 m × 10 m)
+
+  Main aisle gap PRESERVED from original:
+    Left shelf face:  y =  1.275
+    Right shelf face: y = -1.275
+    Clear gap = 2.55 m  (unchanged)
+
+  Cart spawns at (0, 0), person at (2, 0) — unchanged.
 -->
 <sdf version="1.10">
   <world name="supermarket">
@@ -13,32 +19,36 @@
       <real_time_update_rate>250</real_time_update_rate>
     </physics>
 
-    <plugin filename="gz-sim-physics-system"        name="gz::sim::systems::Physics"/>
-    <plugin filename="gz-sim-user-commands-system"  name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-physics-system"           name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"     name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
-    <plugin filename="gz-sim-sensors-system"        name="gz::sim::systems::Sensors">
+    <plugin filename="gz-sim-sensors-system"           name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine>
     </plugin>
-    <plugin filename="gz-sim-contact-system"        name="gz::sim::systems::Contact"/>
+    <plugin filename="gz-sim-contact-system"           name="gz::sim::systems::Contact"/>
 
-    <!-- ── Lighting ─────────────────────────────────────────────────────── -->
-    <light type="directional" name="sun">
-      <cast_shadows>true</cast_shadows>
+    <!-- ── Lighting ──────────────────────────────────────────────────────── -->
+    <light type="directional" name="ambient_fill">
+      <cast_shadows>false</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
-      <diffuse>0.9 0.9 0.9 1</diffuse>
-      <specular>0.3 0.3 0.3 1</specular>
-      <direction>-0.5 0.1 -0.9</direction>
+      <diffuse>0.45 0.45 0.45 1</diffuse>
+      <specular>0.05 0.05 0.05 1</specular>
+      <direction>0 0 -1</direction>
       <attenuation><range>1000</range><constant>0.9</constant><linear>0.01</linear><quadratic>0.001</quadratic></attenuation>
     </light>
 
-    <light type="point" name="fill">
-      <pose>3 0 4 0 0 0</pose>
-      <diffuse>0.4 0.4 0.4 1</diffuse>
-      <specular>0.1 0.1 0.1 1</specular>
-      <attenuation><range>20</range><constant>0.5</constant><linear>0.05</linear><quadratic>0.01</quadratic></attenuation>
-    </light>
+    <!-- Ceiling fluorescent strips: 3 along centre + 6 in outer aisles -->
+    <light type="point" name="ceil_00"><pose>-4  0   2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>14</range><constant>0.35</constant><linear>0.06</linear><quadratic>0.010</quadratic></attenuation></light>
+    <light type="point" name="ceil_01"><pose> 2  0   2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>14</range><constant>0.35</constant><linear>0.06</linear><quadratic>0.010</quadratic></attenuation></light>
+    <light type="point" name="ceil_02"><pose> 8  0   2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>14</range><constant>0.35</constant><linear>0.06</linear><quadratic>0.010</quadratic></attenuation></light>
+    <light type="point" name="ceil_03"><pose>-4  3.5 2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>11</range><constant>0.40</constant><linear>0.07</linear><quadratic>0.012</quadratic></attenuation></light>
+    <light type="point" name="ceil_04"><pose> 2  3.5 2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>11</range><constant>0.40</constant><linear>0.07</linear><quadratic>0.012</quadratic></attenuation></light>
+    <light type="point" name="ceil_05"><pose> 8  3.5 2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>11</range><constant>0.40</constant><linear>0.07</linear><quadratic>0.012</quadratic></attenuation></light>
+    <light type="point" name="ceil_06"><pose>-4 -3.5 2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>11</range><constant>0.40</constant><linear>0.07</linear><quadratic>0.012</quadratic></attenuation></light>
+    <light type="point" name="ceil_07"><pose> 2 -3.5 2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>11</range><constant>0.40</constant><linear>0.07</linear><quadratic>0.012</quadratic></attenuation></light>
+    <light type="point" name="ceil_08"><pose> 8 -3.5 2.8 0 0 0</pose><diffuse>1.0 0.98 0.93 1</diffuse><specular>0.15 0.15 0.15 1</specular><cast_shadows>false</cast_shadows><attenuation><range>11</range><constant>0.40</constant><linear>0.07</linear><quadratic>0.012</quadratic></attenuation></light>
 
-    <!-- ── Ground ───────────────────────────────────────────────────────── -->
+    <!-- ── Ground (cream vinyl tile) ─────────────────────────────────────── -->
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
@@ -48,131 +58,220 @@
         </collision>
         <visual name="vis">
           <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
-          <material><ambient>0.82 0.82 0.78 1</ambient><diffuse>0.82 0.82 0.78 1</diffuse></material>
+          <material><ambient>0.88 0.87 0.84 1</ambient><diffuse>0.88 0.87 0.84 1</diffuse></material>
         </visual>
       </link>
     </model>
 
-    <!-- ── Walls ─────────────────────────────────────────────────────────── -->
+    <!-- Tile grout lines (visual only, no collision) -->
+    <model name="grout_y0"><static>true</static><pose>3.5  1.0 0.001 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>21.0 0.02 0.001</size></box></geometry><material><ambient>0.73 0.72 0.69 1</ambient><diffuse>0.73 0.72 0.69 1</diffuse></material></visual></link></model>
+    <model name="grout_y1"><static>true</static><pose>3.5  0.0 0.001 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>21.0 0.02 0.001</size></box></geometry><material><ambient>0.73 0.72 0.69 1</ambient><diffuse>0.73 0.72 0.69 1</diffuse></material></visual></link></model>
+    <model name="grout_y2"><static>true</static><pose>3.5 -1.0 0.001 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>21.0 0.02 0.001</size></box></geometry><material><ambient>0.73 0.72 0.69 1</ambient><diffuse>0.73 0.72 0.69 1</diffuse></material></visual></link></model>
+    <model name="grout_x0"><static>true</static><pose>0.5 0 0.001 0 0 1.5708</pose><link name="l"><visual name="v"><geometry><box><size>10.0 0.02 0.001</size></box></geometry><material><ambient>0.73 0.72 0.69 1</ambient><diffuse>0.73 0.72 0.69 1</diffuse></material></visual></link></model>
+    <model name="grout_x1"><static>true</static><pose>3.5 0 0.001 0 0 1.5708</pose><link name="l"><visual name="v"><geometry><box><size>10.0 0.02 0.001</size></box></geometry><material><ambient>0.73 0.72 0.69 1</ambient><diffuse>0.73 0.72 0.69 1</diffuse></material></visual></link></model>
+
+    <!-- ── Walls  (X∈[-7,14]  Y∈[-5,5]  H=3.0 m) ────────────────────────── -->
     <model name="left_wall">
-      <static>true</static><pose>0 2.5 1.0 0 0 0</pose>
+      <static>true</static><pose>3.5 5.0 1.5 0 0 0</pose>
       <link name="link">
-        <collision name="col"><geometry><box><size>14 0.15 2.0</size></box></geometry></collision>
-        <visual name="vis">
-          <geometry><box><size>14 0.15 2.0</size></box></geometry>
-          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
-        </visual>
+        <collision name="col"><geometry><box><size>21.0 0.2 3.0</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>21.0 0.2 3.0</size></box></geometry><material><ambient>0.90 0.90 0.88 1</ambient><diffuse>0.90 0.90 0.88 1</diffuse></material></visual>
       </link>
     </model>
 
     <model name="right_wall">
-      <static>true</static><pose>0 -2.5 1.0 0 0 0</pose>
+      <static>true</static><pose>3.5 -5.0 1.5 0 0 0</pose>
       <link name="link">
-        <collision name="col"><geometry><box><size>14 0.15 2.0</size></box></geometry></collision>
-        <visual name="vis">
-          <geometry><box><size>14 0.15 2.0</size></box></geometry>
-          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
-        </visual>
+        <collision name="col"><geometry><box><size>21.0 0.2 3.0</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>21.0 0.2 3.0</size></box></geometry><material><ambient>0.90 0.90 0.88 1</ambient><diffuse>0.90 0.90 0.88 1</diffuse></material></visual>
       </link>
     </model>
 
     <model name="back_wall">
-      <static>true</static><pose>6.5 0 1.0 0 0 0</pose>
+      <static>true</static><pose>14.0 0.0 1.5 0 0 0</pose>
       <link name="link">
-        <collision name="col"><geometry><box><size>0.15 5.3 2.0</size></box></geometry></collision>
-        <visual name="vis">
-          <geometry><box><size>0.15 5.3 2.0</size></box></geometry>
-          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
-        </visual>
+        <collision name="col"><geometry><box><size>0.2 10.2 3.0</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.2 10.2 3.0</size></box></geometry><material><ambient>0.90 0.90 0.88 1</ambient><diffuse>0.90 0.90 0.88 1</diffuse></material></visual>
       </link>
     </model>
 
-    <!-- ── Shelves ───────────────────────────────────────────────────────── -->
-    <model name="shelf_left">
-      <static>true</static><pose>3.5 1.5 0.75 0 0 0</pose>
+    <!-- Front wall: two panels with 4 m entrance gap centred at y=0 -->
+    <model name="front_wall_left">
+      <static>true</static><pose>-7.0 3.5 1.5 0 0 0</pose>
       <link name="link">
-        <collision name="col"><geometry><box><size>1.8 0.45 1.5</size></box></geometry></collision>
-        <visual name="vis">
-          <geometry><box><size>1.8 0.45 1.5</size></box></geometry>
-          <material><ambient>0.55 0.38 0.18 1</ambient><diffuse>0.55 0.38 0.18 1</diffuse></material>
-        </visual>
+        <collision name="col"><geometry><box><size>0.2 3.0 3.0</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.2 3.0 3.0</size></box></geometry><material><ambient>0.90 0.90 0.88 1</ambient><diffuse>0.90 0.90 0.88 1</diffuse></material></visual>
       </link>
     </model>
 
-    <model name="shelf_right">
-      <static>true</static><pose>3.5 -1.5 0.75 0 0 0</pose>
+    <model name="front_wall_right">
+      <static>true</static><pose>-7.0 -3.5 1.5 0 0 0</pose>
       <link name="link">
-        <collision name="col"><geometry><box><size>1.8 0.45 1.5</size></box></geometry></collision>
-        <visual name="vis">
-          <geometry><box><size>1.8 0.45 1.5</size></box></geometry>
-          <material><ambient>0.55 0.38 0.18 1</ambient><diffuse>0.55 0.38 0.18 1</diffuse></material>
-        </visual>
+        <collision name="col"><geometry><box><size>0.2 3.0 3.0</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.2 3.0 3.0</size></box></geometry><material><ambient>0.90 0.90 0.88 1</ambient><diffuse>0.90 0.90 0.88 1</diffuse></material></visual>
       </link>
     </model>
 
-    <!-- ── Mid-aisle obstacle ────────────────────────────────────────────── -->
+    <!-- ── Main aisle shelves ─────────────────────────────────────────────── -->
+    <!--  Row A  x=3.5  (4.0 m long x 0.45 m deep x 1.6 m tall)              -->
+    <!--  AABB: x∈[1.5,5.5]  y∈[1.275,1.725] and [-1.725,-1.275]             -->
+
+    <model name="shelf_A_left">
+      <static>true</static><pose>3.5 1.5 0.8 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>4.0 0.45 1.6</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>4.0 0.45 1.6</size></box></geometry><material><ambient>0.55 0.38 0.18 1</ambient><diffuse>0.55 0.38 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="shelf_A_left_b1"><static>true</static><pose>3.5 1.5 0.25 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_A_left_b2"><static>true</static><pose>3.5 1.5 0.70 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_A_left_b3"><static>true</static><pose>3.5 1.5 1.15 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+
+    <model name="shelf_A_right">
+      <static>true</static><pose>3.5 -1.5 0.8 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>4.0 0.45 1.6</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>4.0 0.45 1.6</size></box></geometry><material><ambient>0.55 0.38 0.18 1</ambient><diffuse>0.55 0.38 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="shelf_A_right_b1"><static>true</static><pose>3.5 -1.5 0.25 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_A_right_b2"><static>true</static><pose>3.5 -1.5 0.70 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_A_right_b3"><static>true</static><pose>3.5 -1.5 1.15 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+
+    <!--  Row B  x=9.0  (same footprint)                                       -->
+    <!--  AABB: x∈[7.0,11.0]  y∈[1.275,1.725] and [-1.725,-1.275]            -->
+
+    <model name="shelf_B_left">
+      <static>true</static><pose>9.0 1.5 0.8 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>4.0 0.45 1.6</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>4.0 0.45 1.6</size></box></geometry><material><ambient>0.55 0.38 0.18 1</ambient><diffuse>0.55 0.38 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="shelf_B_left_b1"><static>true</static><pose>9.0 1.5 0.25 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_B_left_b2"><static>true</static><pose>9.0 1.5 0.70 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_B_left_b3"><static>true</static><pose>9.0 1.5 1.15 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+
+    <model name="shelf_B_right">
+      <static>true</static><pose>9.0 -1.5 0.8 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>4.0 0.45 1.6</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>4.0 0.45 1.6</size></box></geometry><material><ambient>0.55 0.38 0.18 1</ambient><diffuse>0.55 0.38 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="shelf_B_right_b1"><static>true</static><pose>9.0 -1.5 0.25 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_B_right_b2"><static>true</static><pose>9.0 -1.5 0.70 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+    <model name="shelf_B_right_b3"><static>true</static><pose>9.0 -1.5 1.15 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>4.02 0.46 0.03</size></box></geometry><material><ambient>0.70 0.52 0.25 1</ambient><diffuse>0.70 0.52 0.25 1</diffuse></material></visual></link></model>
+
+    <!-- ── Perimeter wall shelves  (y≈±4.5, x∈[-3,11], 14 m long) ──────────
+         AABB left:  x∈[-3.0,11.0]  y∈[4.3,4.7]
+         AABB right: x∈[-3.0,11.0]  y∈[-4.7,-4.3]                           -->
+
+    <model name="perim_shelf_left">
+      <static>true</static><pose>4.0 4.5 1.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>14.0 0.4 2.0</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>14.0 0.4 2.0</size></box></geometry><material><ambient>0.48 0.48 0.52 1</ambient><diffuse>0.48 0.48 0.52 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="perim_l_b1"><static>true</static><pose>4.0 4.5 0.40 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>14.02 0.41 0.03</size></box></geometry><material><ambient>0.65 0.65 0.70 1</ambient><diffuse>0.65 0.65 0.70 1</diffuse></material></visual></link></model>
+    <model name="perim_l_b2"><static>true</static><pose>4.0 4.5 0.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>14.02 0.41 0.03</size></box></geometry><material><ambient>0.65 0.65 0.70 1</ambient><diffuse>0.65 0.65 0.70 1</diffuse></material></visual></link></model>
+    <model name="perim_l_b3"><static>true</static><pose>4.0 4.5 1.50 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>14.02 0.41 0.03</size></box></geometry><material><ambient>0.65 0.65 0.70 1</ambient><diffuse>0.65 0.65 0.70 1</diffuse></material></visual></link></model>
+
+    <model name="perim_shelf_right">
+      <static>true</static><pose>4.0 -4.5 1.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>14.0 0.4 2.0</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>14.0 0.4 2.0</size></box></geometry><material><ambient>0.48 0.48 0.52 1</ambient><diffuse>0.48 0.48 0.52 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="perim_r_b1"><static>true</static><pose>4.0 -4.5 0.40 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>14.02 0.41 0.03</size></box></geometry><material><ambient>0.65 0.65 0.70 1</ambient><diffuse>0.65 0.65 0.70 1</diffuse></material></visual></link></model>
+    <model name="perim_r_b2"><static>true</static><pose>4.0 -4.5 0.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>14.02 0.41 0.03</size></box></geometry><material><ambient>0.65 0.65 0.70 1</ambient><diffuse>0.65 0.65 0.70 1</diffuse></material></visual></link></model>
+    <model name="perim_r_b3"><static>true</static><pose>4.0 -4.5 1.50 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>14.02 0.41 0.03</size></box></geometry><material><ambient>0.65 0.65 0.70 1</ambient><diffuse>0.65 0.65 0.70 1</diffuse></material></visual></link></model>
+
+    <!-- ── Checkout counters  (near entrance, outside main aisle) ─────────
+         AABB left:  x∈[-4.25,-2.75]  y∈[2.85,3.55]
+         AABB right: x∈[-4.25,-2.75]  y∈[-3.55,-2.85]                       -->
+
+    <model name="checkout_left">
+      <static>true</static><pose>-3.5 3.2 0.45 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>1.5 0.7 0.9</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>1.5 0.7 0.9</size></box></geometry><material><ambient>0.86 0.86 0.90 1</ambient><diffuse>0.86 0.86 0.90 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="checkout_left_belt"><static>true</static><pose>-3.5 3.2 0.915 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.5 0.36 0.02</size></box></geometry><material><ambient>0.10 0.10 0.10 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse></material></visual></link></model>
+
+    <model name="checkout_right">
+      <static>true</static><pose>-3.5 -3.2 0.45 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>1.5 0.7 0.9</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>1.5 0.7 0.9</size></box></geometry><material><ambient>0.86 0.86 0.90 1</ambient><diffuse>0.86 0.86 0.90 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="checkout_right_belt"><static>true</static><pose>-3.5 -3.2 0.915 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.5 0.36 0.02</size></box></geometry><material><ambient>0.10 0.10 0.10 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse></material></visual></link></model>
+
+    <!-- ── Produce display tables  (near entrance, outer areas) ─────────────
+         AABB left:  x∈[-6.5,-4.5]  y∈[2.9,4.1]
+         AABB right: x∈[-6.5,-4.5]  y∈[-4.1,-2.9]                          -->
+
+    <model name="produce_table_left">
+      <static>true</static><pose>-5.5 3.5 0.425 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>2.0 1.2 0.85</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>2.0 1.2 0.85</size></box></geometry><material><ambient>0.35 0.60 0.25 1</ambient><diffuse>0.35 0.60 0.25 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="produce_table_right">
+      <static>true</static><pose>-5.5 -3.5 0.425 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>2.0 1.2 0.85</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>2.0 1.2 0.85</size></box></geometry><material><ambient>0.35 0.60 0.25 1</ambient><diffuse>0.35 0.60 0.25 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- ── Refrigerated cooler units  (near back wall, outside main aisle) ──
+         AABB left:  x∈[12.1,12.9]  y∈[1.25,4.75]
+         AABB right: x∈[12.1,12.9]  y∈[-4.75,-1.25]                        -->
+
+    <model name="cooler_left">
+      <static>true</static><pose>12.5 3.0 1.1 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.8 3.5 2.2</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.8 3.5 2.2</size></box></geometry><material><ambient>0.76 0.86 0.92 1</ambient><diffuse>0.76 0.86 0.92 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="cooler_left_glass"><static>true</static><pose>12.12 3.0 1.1 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.02 3.3 2.0</size></box></geometry><material><ambient>0.85 0.95 1.0 1</ambient><diffuse>0.85 0.95 1.0 1</diffuse></material></visual></link></model>
+
+    <model name="cooler_right">
+      <static>true</static><pose>12.5 -3.0 1.1 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.8 3.5 2.2</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.8 3.5 2.2</size></box></geometry><material><ambient>0.76 0.86 0.92 1</ambient><diffuse>0.76 0.86 0.92 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="cooler_right_glass"><static>true</static><pose>12.12 -3.0 1.1 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.02 3.3 2.0</size></box></geometry><material><ambient>0.85 0.95 1.0 1</ambient><diffuse>0.85 0.95 1.0 1</diffuse></material></visual></link></model>
+
+    <!-- ── Original mid-aisle obstacle box (PRESERVED) ──────────────────── -->
     <model name="obstacle_box">
       <static>true</static><pose>2.0 0.6 0.25 0 0 0</pose>
       <link name="link">
         <collision name="col"><geometry><box><size>0.3 0.3 0.5</size></box></geometry></collision>
-        <visual name="vis">
-          <geometry><box><size>0.3 0.3 0.5</size></box></geometry>
-          <material><ambient>0.88 0.50 0.12 1</ambient><diffuse>0.88 0.50 0.12 1</diffuse></material>
-        </visual>
+        <visual name="vis"><geometry><box><size>0.3 0.3 0.5</size></box></geometry><material><ambient>0.88 0.50 0.12 1</ambient><diffuse>0.88 0.50 0.12 1</diffuse></material></visual>
       </link>
     </model>
 
-    <!-- ── UWB beacon ring (visual only – marks person spawn point) ──────── -->
-    <!-- <model name="uwb_beacon">
-      <static>true</static><pose>1.5 0 0.0 0 0 0</pose>
+    <!-- ── Ceiling light housings (visual only) ──────────────────────────── -->
+    <model name="lh_a"><static>true</static><pose>-4 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model>
+    <model name="lh_b"><static>true</static><pose> 2 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model>
+    <model name="lh_c"><static>true</static><pose> 8 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model>
 
-      <link name="ring_outer">
-        <pose>0 0 0.03 0 0 0</pose>
-        <visual name="vis">
-          <geometry><cylinder><radius>0.60</radius><length>0.03</length></cylinder></geometry>
-          <material>
-            <ambient>0.0 0.85 1.0 0.25</ambient><diffuse>0.0 0.85 1.0 0.25</diffuse>
-            <emissive>0.0 0.70 1.0 1.0</emissive>
-          </material>
-          <transparency>0.75</transparency>
-        </visual>
-      </link>
-
-      <link name="ring_mid">
-        <pose>0 0 0.05 0 0 0</pose>
-        <visual name="vis">
-          <geometry><cylinder><radius>0.35</radius><length>0.02</length></cylinder></geometry>
-          <material>
-            <ambient>0.0 1.0 1.0 0.45</ambient><diffuse>0.0 1.0 1.0 0.45</diffuse>
-            <emissive>0.0 0.90 1.0 1.0</emissive>
-          </material>
-          <transparency>0.55</transparency>
-        </visual>
-      </link>
-
-      <link name="beacon_dot">
-        <pose>0 0 0.12 0 0 0</pose>
-        <visual name="vis">
-          <geometry><sphere><radius>0.07</radius></sphere></geometry>
-          <material>
-            <ambient>0.0 1.0 1.0 1.0</ambient><diffuse>0.0 1.0 1.0 1.0</diffuse>
-            <emissive>0.0 1.0 1.0 1.0</emissive>
-          </material>
-        </visual>
-      </link>
-
-      <link name="pole">
-        <pose>0 0 0.75 0 0 0</pose>
-        <visual name="vis">
-          <geometry><cylinder><radius>0.015</radius><length>1.5</length></cylinder></geometry>
-          <material>
-            <ambient>0.0 0.9 1.0 0.6</ambient><diffuse>0.0 0.9 1.0 0.6</diffuse>
-            <emissive>0.0 0.7 1.0 1.0</emissive>
-          </material>
-          <transparency>0.4</transparency>
-        </visual>
-      </link>
-    </model> -->
+    <!-- ── Aisle overhead signs (visual only) ────────────────────────────── -->
+    <model name="sign_A_pole"><static>true</static><pose>3.5 0 2.1 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.04 0.04 0.7</size></box></geometry><material><ambient>0.68 0.68 0.68 1</ambient><diffuse>0.68 0.68 0.68 1</diffuse></material></visual></link></model>
+    <model name="sign_A_board"><static>true</static><pose>3.5 0 2.55 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.55 0.02 0.28</size></box></geometry><material><ambient>0.18 0.40 0.72 1</ambient><diffuse>0.18 0.40 0.72 1</diffuse></material></visual></link></model>
+    <model name="sign_B_pole"><static>true</static><pose>9.0 0 2.1 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.04 0.04 0.7</size></box></geometry><material><ambient>0.68 0.68 0.68 1</ambient><diffuse>0.68 0.68 0.68 1</diffuse></material></visual></link></model>
+    <model name="sign_B_board"><static>true</static><pose>9.0 0 2.55 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.55 0.02 0.28</size></box></geometry><material><ambient>0.18 0.40 0.72 1</ambient><diffuse>0.18 0.40 0.72 1</diffuse></material></visual></link></model>
 
   </world>
 </sdf>

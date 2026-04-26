@@ -19,21 +19,42 @@ from nav_msgs.msg import Odometry
 
 
 # ── Supermarket static obstacle AABBs (world frame) ──────────────────────────
+# Format: (x_min, x_max, y_min, y_max)
+# World: X∈[-7,14]  Y∈[-5,5]
 OBSTACLES = [
-    (-7.000,  7.000,  2.425,  2.575),   # left_wall
-    (-7.000,  7.000, -2.575, -2.425),   # right_wall
-    ( 6.425,  6.575, -2.650,  2.650),   # back_wall
-    (-6.600, -6.400, -2.650,  2.650),   # virtual front boundary
-    ( 2.600,  4.400,  1.275,  1.725),   # shelf_left
-    ( 2.600,  4.400, -1.725, -1.275),   # shelf_right
+    # Boundary walls
+    (-7.000, 14.000,  4.900,  5.100),   # left_wall  (y=+5.0)
+    (-7.000, 14.000, -5.100, -4.900),   # right_wall (y=-5.0)
+    (13.900, 14.100, -5.100,  5.100),   # back_wall  (x=14.0)
+    (-7.100, -6.900,  2.000,  5.000),   # front_wall_left
+    (-7.100, -6.900, -5.000, -2.000),   # front_wall_right
+    (-7.500, -6.500, -2.000,  2.000),   # virtual entrance stop (gap)
+    # Main aisle shelves
+    ( 1.500,  5.500,  1.275,  1.725),   # shelf_A_left
+    ( 1.500,  5.500, -1.725, -1.275),   # shelf_A_right
+    ( 7.000, 11.000,  1.275,  1.725),   # shelf_B_left
+    ( 7.000, 11.000, -1.725, -1.275),   # shelf_B_right
+    # Perimeter wall shelves (y=±4.5, x∈[-3,11])
+    (-3.000, 11.000,  4.300,  4.700),   # perim_shelf_left
+    (-3.000, 11.000, -4.700, -4.300),   # perim_shelf_right
+    # Checkout counters
+    (-4.250, -2.750,  2.850,  3.550),   # checkout_left
+    (-4.250, -2.750, -3.550, -2.850),   # checkout_right
+    # Produce display tables
+    (-6.500, -4.500,  2.900,  4.100),   # produce_table_left
+    (-6.500, -4.500, -4.100, -2.900),   # produce_table_right
+    # Refrigerated coolers (near back wall)
+    (12.100, 12.900,  1.250,  4.750),   # cooler_left
+    (12.100, 12.900, -4.750, -1.250),   # cooler_right
+    # Mid-aisle obstacle box (preserved)
     ( 1.850,  2.150,  0.450,  0.750),   # obstacle_box
 ]
 
 # ── All random pedestrian world spawn positions ───────────────────────────────
 # Must match launch file -x/-y arguments exactly
 ALL_RANDOM_PEOPLE = {
-    'random_person':   ( 0.0, -1.0),
-    'random_person_2': (-4.0,  0.8),
+    'random_person':   ( 0.0, -3.5),
+    'random_person_2': (-3.0,  4.0),
     'random_person_3': ( 4.8,  0.0),
 }
 
