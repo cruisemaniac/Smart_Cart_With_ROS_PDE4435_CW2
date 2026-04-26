@@ -1,0 +1,42 @@
+\section{Conclusion}
+
+This paper presented the design, simulation, and evaluation of an
+Autonomous Smart Cart system built on ROS~2 Jazzy and Gazebo Harmonic.
+The system integrates a UWB-based localisation pipeline, a 2D Kalman
+filter, a proportional follow-me controller, and a LiDAR obstacle
+safety layer to enable a differential-drive cart to autonomously track
+a user within a simulated indoor retail environment.
+
+Simulation results demonstrated that the implemented system meets all
+primary functional objectives. The Kalman-smoothed UWB localisation
+achieves a position error of $<$0.13\,m across the 1--4\,m operating
+range, well within the 0.30\,m accuracy target. The follow-me controller
+maintains a following distance of $1.0 \pm 0.15$\,m during both
+straight-line and turning scenarios. The obstacle safety layer correctly
+enforces three-zone proximity speed scaling and triggers emergency stops
+at the specified 0.30\,m threshold, with no false stops caused by the
+followed person due to the FOLLOW mode obstacle filter. End-to-end
+control latency of $\approx$5\,ms satisfies the 30\,ms non-functional
+requirement.
+
+The modular ROS~2 architecture --- separating localisation, follow-me
+control, navigation state management, and obstacle safety into
+independent nodes connected via publish-subscribe topics --- proved
+effective for iterative testing and independent tuning of each
+subsystem. The two-stage velocity pipeline in particular provides a
+clean separation between navigation intent and safety enforcement.
+
+Key limitations of the current simulation include the use of a
+teleop-controlled person model (rather than autonomous human motion),
+a purely proportional controller (which introduces overshoot during
+rapid directional changes), and the absence of SLAM-based global
+localisation. These form the basis for the future improvements
+described in Section~VIII, with computer-vision-based human tracking
+and autonomous return-to-base identified as the highest-priority
+second-generation upgrades.
+
+Overall, the Gazebo simulation validates the core system architecture
+and demonstrates that UWB-guided follow-me with layered LiDAR obstacle
+avoidance is a viable and safe approach for autonomous indoor cart
+systems. The codebase, launch configuration, and simulation world are
+publicly available on GitHub for reproduction and further development.
