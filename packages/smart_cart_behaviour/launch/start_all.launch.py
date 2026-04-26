@@ -25,6 +25,15 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 
+# ── Random pedestrian config — spawns are used by both Gazebo and the ROS node
+# (ns, spawn_x, spawn_y, initial_yaw)
+RANDOM_PEOPLE = [
+    ('random_person',   '0.0',  '-3.5', '1.5708'),   # right outer aisle
+    ('random_person_2', '-3.0',  '4.0', '0.0'),       # left outer area
+    ('random_person_3', '4.8',   '0.0', '3.14159'),   # main aisle (past shelf A)
+]
+
+
 def generate_launch_description():
 
     desc_pkg = get_package_share_directory('smart_cart_description')
@@ -33,10 +42,19 @@ def generate_launch_description():
     xacro_file      = os.path.join(desc_pkg, 'urdf',   'smart_cart.urdf.xacro')
     world_file      = os.path.join(gz_pkg,   'worlds', 'supermarket.sdf')
     person_sdf_file = os.path.join(gz_pkg,   'models', 'person_actor.sdf')
+    rp_sdf_file     = os.path.join(gz_pkg,   'models', 'random_person.sdf')
     bridge_config   = os.path.join(gz_pkg,   'config', 'ros_gz_bridge.yaml')
     rviz_config     = os.path.join(gz_pkg,   'config', 'smart_cart.rviz')
 
     robot_urdf = xacro.process_file(xacro_file).toxml()
+
+    # Read the single SDF template once; substitute model name at spawn time
+    with open(rp_sdf_file, 'r') as f:
+        rp_sdf_template = f.read()
+
+    def rp_sdf(ns):
+        """Return SDF string with 'random_person' replaced by the given namespace."""
+        return rp_sdf_template.replace('random_person', ns)
 
     return LaunchDescription([
 
@@ -69,8 +87,8 @@ def generate_launch_description():
                          'use_sim_time': True}],
         ),
 
-        # ── t=3  Spawn smart cart ────────────────────────────────────────
-        TimerAction(period=3.0, actions=[
+        # ── t=6  Spawn smart cart ────────────────────────────────────────
+        TimerAction(period=6.0, actions=[
             LogInfo(msg='[1/5] Spawning Smart Cart...'),
             Node(
                 package='ros_gz_sim', executable='create',
@@ -79,15 +97,14 @@ def generate_launch_description():
                     '-name', 'smart_cart',
                     '-topic', '/robot_description',
                     '-x', '0.0', '-y', '0.0', '-z', '0.20',
-                    '-R', '0.0', '-P', '0.0', '-Y', '0.0', #'3.14159',  # face forward
+                    '-R', '0.0', '-P', '0.0', '-Y', '0.0',
                 ],
                 output='screen',
             ),
         ]),
 
-        # ── t=4  Spawn person ────────────────────────────────────────────
-        # Spawned at x=-2.0 (in front of cart based on cart orientation)
-        TimerAction(period=4.0, actions=[
+        # ── t=7  Spawn main person ───────────────────────────────────────
+        TimerAction(period=7.0, actions=[
             LogInfo(msg='[2/5] Spawning person actor...'),
             Node(
                 package='ros_gz_sim', executable='create',
@@ -96,14 +113,33 @@ def generate_launch_description():
                     '-name', 'person',
                     '-file', person_sdf_file,
                     '-x', '2.0', '-y', '0.0', '-z', '0.12',
-                    '-R', '0.0', '-P', '0.0', '-Y', '0.0', #'3.14159',  # face cart (180°)
+                    '-R', '0.0', '-P', '0.0', '-Y', '0.0',
                 ],
                 output='screen',
             ),
         ]),
 
-        # ── t=5  ROS-Gz bridge ───────────────────────────────────────────
-        TimerAction(period=5.0, actions=[
+        # ── t=8  Spawn 3 random pedestrians (same SDF, substituted name) ──
+        TimerAction(period=8.0, actions=[
+            LogInfo(msg='[2b/5] Spawning 3 random pedestrians...'),
+            *[
+                Node(
+                    package='ros_gz_sim', executable='create',
+                    name=f'spawn_{ns}',
+                    arguments=[
+                        '-name', ns,
+                        '-string', rp_sdf(ns),
+                        '-x', sx, '-y', sy, '-z', '0.12',
+                        '-R', '0.0', '-P', '0.0', '-Y', yaw,
+                    ],
+                    output='screen',
+                )
+                for (ns, sx, sy, yaw) in RANDOM_PEOPLE
+            ],
+        ]),
+
+        # ── t=9  ROS-Gz bridge ───────────────────────────────────────────
+        TimerAction(period=9.0, actions=[
             LogInfo(msg='[3/5] Starting ROS-Gz bridge...'),
             Node(
                 package='ros_gz_bridge', executable='parameter_bridge',
@@ -112,8 +148,8 @@ def generate_launch_description():
             ),
         ]),
 
-        # ── t=6  All ROS 2 nodes ─────────────────────────────────────────
-        TimerAction(period=6.0, actions=[
+        # ── t=10  All ROS 2 nodes ────────────────────────────────────────
+        TimerAction(period=10.0, actions=[
             LogInfo(msg='[4/5] Starting all nodes...'),
 
             # Obstacle stop (safety layer)
@@ -149,6 +185,21 @@ def generate_launch_description():
                 }],
             ),
 
+            # 3 random pedestrian walkers — one node instance per pedestrian
+            *[
+                Node(
+                    package='smart_cart_behaviour',
+                    executable='random_person_node',
+                    name=f'{ns}_node',
+                    output='screen',
+                    parameters=[{
+                        'use_sim_time': False,
+                        'person_ns':    ns,
+                    }],
+                )
+                for (ns, sx, sy, yaw) in RANDOM_PEOPLE
+            ],
+
             # UWB simulator (trilateration via odometry)
             Node(
                 package='smart_cart_navigation',
@@ -157,32 +208,10 @@ def generate_launch_description():
                 output='screen',
                 parameters=[{'use_sim_time': True}],
             ),
-
-            # Node(
-            #     package='joint_state_publisher',
-            #     executable='joint_state_publisher',
-            #     name='joint_state_publisher',
-            #     output='screen',
-            #     parameters=[{'use_sim_time': True}],
-            # ),
-
-            # Node(
-            #     package='tf2_ros',
-            #     executable='static_transform_publisher',
-            #     name='person_odom_tf',
-            #     arguments=[
-            #         '0.0', '0.0', '0.0',   # x y z translation (spawn position)
-            #         '0.0', '0.0', '0.0',   # roll pitch yaw
-            #         'odom',                 # parent frame
-            #         'person'           # child frame
-            #     ],
-            #     output='screen',
-            # ),
-
         ]),
 
-        # ── t=7  RViz2 ───────────────────────────────────────────────────
-        TimerAction(period=7.0, actions=[
+        # ── t=11  RViz2 ──────────────────────────────────────────────────
+        TimerAction(period=11.0, actions=[
             Node(
                 package='rviz2', executable='rviz2', name='rviz2',
                 output='screen',
@@ -192,8 +221,8 @@ def generate_launch_description():
             ),
         ]),
 
-        # ── t=8  Instructions ────────────────────────────────────────────
-        TimerAction(period=8.0, actions=[
+        # ── t=12  Instructions ───────────────────────────────────────────
+        TimerAction(period=12.0, actions=[
             LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
             LogInfo(msg='  READY. Open a new terminal and run:'),
             LogInfo(msg='  ros2 run smart_cart_behaviour teleop_person_node'),

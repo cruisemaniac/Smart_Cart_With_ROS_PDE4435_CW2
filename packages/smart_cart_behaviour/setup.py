@@ -27,6 +27,7 @@ setup(
             'teleop_person_node       = smart_cart_behaviour.teleop_person_node:main',
             'cart_teleop_node         = smart_cart_behaviour.cart_teleop_node:main',
             'person_tf_corrector_node = smart_cart_behaviour.person_tf_corrector_node:main',
+            'random_person_node       = smart_cart_behaviour.random_person_node:main',
         ],
     },
 )
