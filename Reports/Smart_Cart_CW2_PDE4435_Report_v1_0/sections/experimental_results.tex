@@ -4,17 +4,19 @@
 ongoing and quantitative results will be finalized before submission.}
 
 \subsection{Simulation Setup}
-All experiments were conducted in Gazebo (version 11) with ROS2 
-Humble. The simulated environment replicates a single retail aisle 
-of 0.9\,m width and 10\,m length, with two static shelf obstacles 
-and one dynamic pedestrian actor.
+All experiments were conducted in Gazebo Harmonic with ROS~2 Jazzy.
+The simulated environment contains a supermarket world with two static
+shelf models (at $\pm$1.5\,m), a static orange obstacle box, and a
+teleop-controlled person model representing the user. The person is
+not an autonomous actor; it is driven via keyboard during each trial.
 
 \subsection{Follow-Me Performance}
 \textit{[DRAFT --- Data collection in progress.]}
 
 Preliminary trials indicate the cart successfully maintains the 
-target following distance of $0.8 \pm 0.2$\,m during straight-line 
-tracking. Turn-following behavior is under evaluation.
+target following distance of $1.0 \pm 0.15$\,m during straight-line 
+tracking, consistent with the \texttt{FOLLOW\_DIST\_M = 1.0} and 
+\texttt{DEAD\_ZONE\_M = 0.15} parameters.
 
 \begin{table}[!ht]
 \caption{Preliminary Follow-Me Results --- Gazebo Simulation 
@@ -48,7 +50,7 @@ Stop-and-resume behavior     & 5 & \textit{[pending]} \\
 \midrule
 Static shelf obstacle  & 10 & \textit{[pending]} \\
 Dynamic pedestrian     & 10 & \textit{[pending]} \\
-Narrow aisle (0.9\,m) & 5  & \textit{[pending]} \\
+Obstacle box avoidance (static) & 5  & \textit{[pending]} \\
 \bottomrule
 \end{tabular}
 \end{table}

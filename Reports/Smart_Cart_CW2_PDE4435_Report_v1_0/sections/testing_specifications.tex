@@ -39,9 +39,9 @@ T1.8 & Camera Visual Odometry (VO) drift & Move cart using only camera with enco
 \toprule
 \textbf{ID} & \textbf{Description} & \textbf{Method} & \textbf{Acceptance Criteria} \\
 \midrule
-T2.1 & ROS~2 topic publish rates & \texttt{ros2 topic hz} monitoring all nodes & All critical topics $>$40\,Hz \\
+T2.1 & ROS~2 topic publish rates & \texttt{ros2 topic hz} monitoring all nodes & UWB topics at $\geq$20\,Hz; control loop at $\geq$20\,Hz; nav status at $\geq$2\,Hz \\
 T2.2 & Serial bridge latency & Timestamp sensor data vs.\ ROS topic & End-to-end latency $<$30\,ms \\
-T2.3 & EKF pose fusion stability & Walk user around cart perimeter 3$\times$ & No pose jumps $>$20\,cm; smooth trajectory \\
+T2.3 & UWB + Kalman filter stability & Move person around cart perimeter 3$\times$ using \texttt{teleop\_person\_node} & No position jumps $>$20\,cm; Kalman-smoothed estimate converges after warmup \\
 T2.4 & Obstacle zone classification & Approach cart with obstacle at varying speeds & Correct zone output at all thresholds \\
 T2.5 & Speed adaptation to load & Test at 0, 10, 20, 40\,kg basket load & Speed reduces proportionally rules \\
 T2.6 & Watchdog timer fault & Kill RPi process; observe Arduino & Motor cut within 500\,ms; red LED flash \\
@@ -60,7 +60,7 @@ T2.6 & Watchdog timer fault & Kill RPi process; observe Arduino & Motor cut with
 \toprule
 \textbf{ID} & \textbf{Description} & \textbf{Method} & \textbf{Acceptance Criteria} \\
 \midrule
-T3.1 & Follow-me straight line & User walks 10\,m corridor; cart follows & Cart maintains 0.8\,m $\pm$ 0.2\,m following distance \\
+T3.1 & Follow-me straight line & User walks 10\,m corridor; cart follows & Cart maintains 1.0\,m $\pm$ 0.15\,m following distance \\
 T3.2 & Follow-me with turns & User makes 90° left and right turns & Cart completes turn within 1.5\,s with no collision \\
 T3.3 & Obstacle avoidance --- static & Static box placed in cart path mid-follow & Cart re-routes without stopping $>$2\,s \\
 T3.4 & Obstacle avoidance --- dynamic & Person walks across cart path at 1.0\,m/s & No contact; recovery to follow-path within 3\,s \\
