@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="smart_cart_3">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.0384684706843582 0.000328594209132145 0.439267103838668"
+        rpy="0 0 0" />
+      <mass
+        value="11.4199936702184" />
+      <inertia
+        ixx="0.792639906722144"
+        ixy="-0.000156131230804727"
+        ixz="0.0771841571661805"
+        iyy="1.47343719359479"
+        iyz="0.00125997528043684"
+        izz="1.3575590179181" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.0384684706843582 0.000328594209132145 0.439267103838668"/>
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+
+
+  <link
+    name="FL_wheel">
+    <inertial>
+      <origin
+        xyz="-3.95772470351829E-10 0.0196415615666232 -1.71259100873594E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.26444633927726" />
+      <inertia
+        ixx="0.00600890823676494"
+        ixy="1.21583271812495E-11"
+        ixz="4.65326326672479E-12"
+        iyy="0.0117012063487314"
+        iyz="7.40508981004547E-09"
+        izz="0.00600892113696431" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/FL_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.298039215686275 0.298039215686275 0.298039215686275 1" />
+      </material>
+    </visual>
+    <collision>
+      
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/FL_wheel.STL" />
+      </geometry>
+      <surface>
+        <friction>
+          <ode>
+            <mu>10.0</mu>
+            <mu2>10.0</mu2>
+          </ode>
+        </friction>
+      </surface>
+    </collision>
+  </link>
+
+  <joint
+    name="FL_joint"
+    type="continuous">
+    <origin
+      xyz="0.26 0.22 0.125"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="FL_wheel" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      effort="100"
+      velocity="100" />
+  </joint>
+  <link
+    name="FR_wheel">
+    <inertial>
+      <origin
+        xyz="-3.9813946584033E-10 0.0196415615666194 -1.71259091869963E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.26444633927611" />
+      <inertia
+        ixx="0.006008908236756"
+        ixy="1.21590867182459E-11"
+        ixz="4.6340702542641E-12"
+        iyy="0.0117012063487191"
+        iyz="7.40508808330339E-09"
+        izz="0.00600892113696104" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/FR_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.298039215686275 0.298039215686275 0.298039215686275 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/FR_wheel.STL" />
+      </geometry>
+      <surface>
+        <friction>
+          <ode>
+            <mu>10.0</mu>
+            <mu2>10.0</mu2>
+          </ode>
+        </friction>
+      </surface>
+    </collision>
+  </link>
+
+  <joint
+    name="FR_joint"
+    type="continuous">
+    <origin
+      xyz="0.26 -0.22 0.125"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="FR_wheel" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      effort="100"
+      velocity="100" />
+  </joint>
+  <link
+    name="RL_wheel">
+    <inertial>
+      <origin
+        xyz="-3.95772414840678E-10 0.0196415615666232 -1.71259100874566E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.26444633927726" />
+      <inertia
+        ixx="0.00600890823676494"
+        ixy="1.21583270642938E-11"
+        ixz="4.65325906519943E-12"
+        iyy="0.0117012063487314"
+        iyz="7.40508981028564E-09"
+        izz="0.00600892113696431" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/RL_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.298039215686275 0.298039215686275 0.298039215686275 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/RL_wheel.STL" />
+      </geometry>
+      <surface>
+        <friction>
+          <ode>
+            <mu>10.0</mu>
+            <mu2>10.0</mu2>
+          </ode>
+        </friction>
+      </surface>
+    </collision>
+  </link>
+
+  <joint
+    name="RL_joint"
+    type="continuous">
+    <origin
+      xyz="-0.26 0.22 0.125"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="RL_wheel" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      effort="100"
+      velocity="100" />
+  </joint>
+  <link
+    name="RR_wheel">
+    <inertial>
+      <origin
+        xyz="-3.97575306010367E-10 0.0196415615666198 -1.71259093140197E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.26444633927684" />
+      <inertia
+        ixx="0.00600890823675785"
+        ixy="1.21588621164181E-11"
+        ixz="4.63852871043779E-12"
+        iyy="0.0117012063487227"
+        iyz="7.40508847843525E-09"
+        izz="0.00600892113696302" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/RR_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.298039215686275 0.298039215686275 0.298039215686275 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://smart_cart_design_vignesh/meshes/RR_wheel.STL" />
+      </geometry>
+      <surface>
+        <friction>
+          <ode>
+            <mu>10.0</mu>
+            <mu2>10.0</mu2>
+          </ode>
+        </friction>
+      </surface>
+    </collision>
+  </link>
+  <joint
+    name="RR_joint"
+    type="continuous">
+    <origin
+      xyz="-0.26 -0.22 0.125"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="RR_wheel" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      effort="100"
+      velocity="100" />
+  </joint>
+
+  <!-- DIFF DRIVE -->
+  <gazebo>
+    <plugin filename="gz-sim-diff-drive-system"
+            name="gz::sim::systems::DiffDrive">
+
+      <left_joint>FL_joint</left_joint>
+      <left_joint>RL_joint</left_joint>
+
+      <right_joint>FR_joint</right_joint>
+      <right_joint>RR_joint</right_joint>
+
+      <wheel_separation>0.44</wheel_separation>
+      <wheel_radius>0.125</wheel_radius>
+
+      <topic>/cmd_vel</topic>
+
+    </plugin>
+  </gazebo>
+  
+  <!-- Lidar -->
+  <link name="lidar_link">
+  <visual>
+    <geometry>
+      <cylinder radius="0.04" length="0.05"/>
+    </geometry>
+    <material name="grey">
+      <color rgba="0.6 0.6 0.6 1"/>
+    </material>
+  </visual>
+
+  <collision>
+    <geometry>
+      <cylinder radius="0.04" length="0.05"/>
+    </geometry>
+  </collision>
+
+  <inertial>
+    <mass value="0.17"/>
+    <inertia ixx="0.0001" iyy="0.0001" izz="0.0001"
+             ixy="0" ixz="0" iyz="0"/>
+  </inertial>
+</link>
+
+<joint name="lidar_joint" type="fixed">
+  <parent link="base_link"/>
+  <child link="lidar_link"/>
+  <origin xyz="0.5 0 0.3"/>
+</joint>
+
+<gazebo reference="lidar_link">
+  <sensor name="lidar" type="gpu_lidar">
+    <always_on>true</always_on>
+    <update_rate>10</update_rate>
+    <visualize>true</visualize>
+
+    <topic>scan</topic>   <!-- NOTE: no "/" -->
+
+    <lidar>
+      <scan>
+        <horizontal>
+          <samples>360</samples>
+          <min_angle>-3.14</min_angle>
+          <max_angle>3.14</max_angle>
+        </horizontal>
+      </scan>
+      <range>
+        <min>0.12</min>
+        <max>12.0</max>
+      </range>
+    </lidar>
+  </sensor>
+</gazebo>
+
+<!-- ultrasonic_left -->
+<link name="ultrasonic_left">
+  <visual>
+    <geometry><box size="0.015 0.015 0.012"/></geometry>
+  </visual>
+</link>
+
+<joint name="ultra_left_joint" type="fixed">
+  <parent link="base_link"/>
+  <child link="ultrasonic_left"/>
+  <origin xyz="0.44 0.2 0.3"/>
+</joint>
+
+<gazebo reference="ultrasonic_left">
+  <sensor name="ultra_left" type="gpu_lidar">
+    <topic>/ultrasonic/left</topic>
+    <update_rate>10</update_rate>
+    <lidar>
+      <scan>
+        <horizontal>
+          <samples>5</samples>
+          <min_angle>-0.13</min_angle>
+          <max_angle>0.13</max_angle>
+        </horizontal>
+      </scan>
+      <range>
+        <min>0.02</min>
+        <max>4.0</max>
+      </range>
+    </lidar>
+  </sensor>
+</gazebo>
+
+<!-- ultrasonic_right -->
+<link name="ultrasonic_right">
+  <visual>
+    <geometry><box size="0.015 0.015 0.012"/></geometry>
+  </visual>
+</link>
+
+<joint name="ultra_right_joint" type="fixed">
+  <parent link="base_link"/>
+  <child link="ultrasonic_right"/>
+  <origin xyz="0.44 -0.2 0.3"/>
+</joint>
+
+<gazebo reference="ultrasonic_right">
+  <sensor name="ultra_right" type="gpu_lidar">
+    <topic>/ultrasonic/right</topic>
+    <update_rate>10</update_rate>
+    <lidar>
+      <scan>
+        <horizontal>
+          <samples>5</samples>
+          <min_angle>-0.13</min_angle>
+          <max_angle>0.13</max_angle>
+        </horizontal>
+      </scan>
+      <range>
+        <min>0.02</min>
+        <max>4.0</max>
+      </range>
+    </lidar>
+  </sensor>
+</gazebo>
+
+<!-- uwb_fl-->
+<link name="uwb_fl">
+  <visual>
+    <geometry><box size="0.04 0.04 0.03"/></geometry>
+  </visual>
+</link>
+
+<joint name="uwb_fl_joint" type="fixed">
+  <parent link="base_link"/>
+  <child link="uwb_fl"/>
+  <origin xyz="0.32 0.27 0.3"/>
+</joint>
+
+<!-- uwb_fr-->
+<link name="uwb_fr">
+  <visual>
+    <geometry><box size="0.04 0.04 0.03"/></geometry>
+  </visual>
+</link>
+
+<joint name="uwb_fr_joint" type="fixed">
+  <parent link="base_link"/>
+  <child link="uwb_fr"/>
+  <origin xyz="0.32 -0.27 0.3"/>
+</joint>
+
+<!-- uwb_rl-->
+<link name="uwb_rl">
+  <visual>
+    <geometry><box size="0.04 0.04 0.03"/></geometry>
+  </visual>
+</link>
+
+<joint name="uwb_rl_joint" type="fixed">
+  <parent link="base_link"/>
+  <child link="uwb_rl"/>
+  <origin xyz="-0.32 0.27 0.3"/>
+</joint>
+
+<!-- uwb_rr-->
+<link name="uwb_rr">
+  <visual>
+    <geometry><box size="0.04 0.04 0.03"/></geometry>
+  </visual>
+</link>
+
+<joint name="uwb_rr_joint" type="fixed">
+  <parent link="base_link"/>
+  <child link="uwb_rr"/>
+  <origin xyz="-0.32 -0.27 0.3"/>
+</joint>
+
+</robot>
