@@ -1,6 +1,6 @@
-# ros_gz_bridge.yaml – ROS 2 Jazzy <-> Gazebo Harmonic
+# ros_gz_bridge.yaml - ROS 2 Jazzy <-> Gazebo Harmonic
 # Fix: joint_states uses gz.msgs.Model_V which is NOT supported by
-# parameter_bridge. Removed it – robot_state_publisher handles TF.
+# parameter_bridge. Removed it - robot_state_publisher handles TF.
 # Use /tf bridge instead for transforms.
 
 # ── Smart cart sensors ────────────────────────────────────────────────

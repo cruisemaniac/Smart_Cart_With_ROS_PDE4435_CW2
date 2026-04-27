@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <!--
-  supermarket.urdf  –  Expanded realistic supermarket environment
+  supermarket.urdf  -  Expanded realistic supermarket environment
   Converted and enlarged from supermarket.sdf
-  
+
   Layout overview (top-down, X = forward/depth, Y = lateral):
     ┌──────────────────────────────────────────────────────┐  y= 6.5 (left wall)
     │  [Shelf A1]  [Shelf A2]  [Shelf A3]  [Shelf A4]     │
@@ -11,13 +11,13 @@
     │                                                       │  ← right aisle gap
     │  [Shelf B1]  [Shelf B2]  [Shelf B3]  [Shelf B4]     │
     └──────────────────────────────────────────────────────┘  y=-6.5 (right wall)
-    
+
   Aisle between shelf rows: exactly preserved from original
     Left shelf face:  y = 1.5 - 0.225 = 1.275
     Right shelf face: y = -1.5 + 0.225 = -1.275
     Clear gap = 2.55 m  (same as original)
-    
-  Person/actor spawned separately – not included here.
+
+  Person/actor spawned separately - not included here.
 -->
 <robot name="supermarket">
 
@@ -119,7 +119,7 @@
     <origin xyz="29.0 0 1.75" rpy="0 0 0"/>
   </joint>
 
-  <!-- Front wall (x = -1) – left portion (entrance gap in middle) -->
+  <!-- Front wall (x = -1) - left portion (entrance gap in middle) -->
   <link name="front_wall_left">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -158,16 +158,16 @@
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        SHELF MACRO LAYOUT
-       
+
        Shelf unit dimensions (same depth as original, just taller + longer):
          size: 4.0 (length along X) × 0.45 (depth Y) × 1.8 (height Z)
-       
+
        Left row:  y = +1.5   (face at y=1.275, same as original)
        Right row: y = -1.5   (face at y=-1.275, same as original)
-       
+
        4 shelf units per row, spaced 5.0 m apart (with 1.0 m cross-aisle gap)
        Rows: A (x≈3.5), B (x≈8.5), C (x≈13.5), D (x≈18.5), E (x≈23.5)
-       
+
        Each shelf unit has 3 visible shelf boards inside it.
   ═══════════════════════════════════════════════════════════════════════ -->
 
@@ -404,7 +404,7 @@
   <joint name="perim_right_b3_jnt" type="fixed"><parent link="world"/><child link="perim_right_b3"/><origin xyz="13.0 -6.3 1.45" rpy="0 0 0"/></joint>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
-       CHECKOUT COUNTERS  (near entrance, x ≈ 1.0–2.5)
+       CHECKOUT COUNTERS  (near entrance, x ≈ 1.0-2.5)
        3 counters side by side along Y
   ═══════════════════════════════════════════════════════════════════════ -->
 
@@ -564,15 +564,15 @@
   </joint>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
-       CART PARKING AREA  –  floor markings only (paint lines, z≈0)
-       
+       CART PARKING AREA  -  floor markings only (paint lines, z≈0)
+
        Located between checkout_3 (centre y=-1.8, edge at y≈-2.15)
        and perimeter_shelf_right (centre y=-6.3, face at y≈-5.9)
-       
+
        Zone:  x ∈ [0.5, 2.5]  (2.0 m, aligned with checkouts)
               y ∈ [-5.7, -2.3]  (3.4 m wide, clear of both objects)
        Centre: x=1.5, y=-4.0
-       
+
        All marks: bright yellow  rgba="0.98 0.85 0.10 1"
        Thickness: 0.002 m (flush on floor surface)
   ═══════════════════════════════════════════════════════════════════════ -->

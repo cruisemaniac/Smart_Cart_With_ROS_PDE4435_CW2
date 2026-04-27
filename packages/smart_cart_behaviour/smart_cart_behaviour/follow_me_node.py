@@ -14,7 +14,7 @@ Topics
 Obstacle avoidance strategy
 ---------------------------
   Front sector  ±40°   : danger zone — triggers avoidance
-  Side sectors  40–80° : clearance check — pick the more open side
+  Side sectors  40-80° : clearance check — pick the more open side
   Proximity blend       : at OBSTACLE_SLOW_DIST avoidance starts fading in;
                           at OBSTACLE_STOP_DIST  forward motion halted entirely
                           (prevents wheel-slip / odometry corruption in RViz)
@@ -193,7 +193,7 @@ class FollowMeNode(Node):
             self.get_logger().info('[UWB] Signal acquired.')
             self._uwb_was_alive = True
         elif not uwb_fresh and self._uwb_was_alive:
-            self.get_logger().warn('[UWB] Signal lost – stopping.')
+            self.get_logger().warn('[UWB] Signal lost - stopping.')
             self._uwb_was_alive = False
 
         if not uwb_fresh:

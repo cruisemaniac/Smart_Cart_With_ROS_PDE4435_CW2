@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-teleop_person_node.py  –  Smart Cart Person Teleop + Remote Control
+teleop_person_node.py  -  Smart Cart Person Teleop + Remote Control
 ====================================================================
 Hold-to-move: WASD commands are sent only while the key is held down.
 Releasing the key stops the person within one key-repeat interval (~0.12 s).
@@ -64,7 +64,7 @@ SPEED_STEP            = 0.1
 MAX_LINEAR_SPEED      = 1.5
 MIN_LINEAR_SPEED      = 0.1
 
-# Hold-to-move: key-repeat fires every ~30–50 ms; timeout must be longer
+# Hold-to-move: key-repeat fires every ~30-50 ms; timeout must be longer
 KEY_TIMEOUT_SEC = 0.12
 
 # ── Person spawn position (must match launch file -x / -y arguments) ──────

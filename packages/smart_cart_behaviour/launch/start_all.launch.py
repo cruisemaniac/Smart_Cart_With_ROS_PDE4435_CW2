@@ -9,9 +9,9 @@ After launch completes, open a second terminal:
 Controls:
   W/S    move person forward/backward
   A/D    turn person left/right
-  1      remote STOP   – cart stops
-  2      remote FOLLOW – cart follows person
-  3      remote IDLE   – cart standby
+  1      remote STOP   - cart stops
+  2      remote FOLLOW - cart follows person
+  3      remote IDLE   - cart standby
   +/-    person speed
   ESC    quit
 """
@@ -25,7 +25,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 
-# ── Random pedestrian config — spawns are used by both Gazebo and the ROS node
+# ── Random pedestrian config - spawns are used by both Gazebo and the ROS node
 # (ns, spawn_x, spawn_y, initial_yaw)
 RANDOM_PEOPLE = [
     ('random_person',   '0.0',  '-3.5', '1.5708'),   # right outer aisle
@@ -59,7 +59,7 @@ def generate_launch_description():
     return LaunchDescription([
 
         LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
-        LogInfo(msg='  Smart Cart Simulation – UWB + LiDAR Follow-Me'),
+        LogInfo(msg='  Smart Cart Simulation - UWB + LiDAR Follow-Me'),
         LogInfo(msg='  Cart starts IDLE. Run teleop in a second terminal.'),
         LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
 
@@ -185,7 +185,7 @@ def generate_launch_description():
                 }],
             ),
 
-            # 3 random pedestrian walkers — one node instance per pedestrian
+            # 3 random pedestrian walkers - one node instance per pedestrian
             *[
                 Node(
                     package='smart_cart_behaviour',

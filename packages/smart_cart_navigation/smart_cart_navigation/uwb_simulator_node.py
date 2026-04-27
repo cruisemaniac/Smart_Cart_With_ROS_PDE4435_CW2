@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-uwb_simulator_node.py  –  UWB Trilateration Simulator
+uwb_simulator_node.py  -  UWB Trilateration Simulator
 Publishes RViz markers: line cart→person + distance text label.
 """
 
@@ -61,7 +61,7 @@ class UWBSimulatorNode(Node):
             clock=rclpy.clock.Clock(
                 clock_type=rclpy.clock.ClockType.STEADY_TIME))
 
-        self.get_logger().info('UWB Simulator started – publishing RViz markers on /uwb/markers')
+        self.get_logger().info('UWB Simulator started - publishing RViz markers on /uwb/markers')
 
     def _cart_odom_cb(self, msg: Odometry):
         self._cart_x = msg.pose.pose.position.x

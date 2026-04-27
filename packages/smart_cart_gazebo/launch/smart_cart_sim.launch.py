@@ -82,7 +82,7 @@ def generate_launch_description():
             ],
         ),
 
-        # ---- 4. ROS–Gz Bridge ----
+        # ---- 4. ROS-Gz Bridge ----
         TimerAction(
             period=4.0,
             actions=[

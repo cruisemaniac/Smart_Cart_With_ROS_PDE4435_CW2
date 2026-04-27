@@ -2,7 +2,7 @@
 <robot name="smart_cart" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- ================================================ -->
-  <!-- PROPERTIES – from CW1 Hardware Spec              -->
+  <!-- PROPERTIES - from CW1 Hardware Spec              -->
   <!-- ================================================ -->
   <xacro:property name="cart_length"  value="0.70"/>
   <xacro:property name="cart_width"   value="0.50"/>
@@ -112,7 +112,7 @@
 
   <!-- ================================================ -->
   <!-- UWB ANCHOR MACRO                                 -->
-  <!-- 4 anchors at cart corners – visual only          -->
+  <!-- 4 anchors at cart corners - visual only          -->
   <!-- Real UWB trilateration handled by                -->
   <!-- uwb_simulator_node.py using odometry data        -->
   <!-- ================================================ -->
@@ -120,7 +120,7 @@
 
     <link name="${name}_uwb_anchor">
 
-      <!-- Anchor housing – small grey box -->
+      <!-- Anchor housing - small grey box -->
       <visual>
         <geometry>
           <box size="0.04 0.04 0.03"/>
@@ -128,7 +128,7 @@
         <material name="grey_sensor"/>
       </visual>
 
-      <!-- Cyan glow sphere – indicates active UWB signal -->
+      <!-- Cyan glow sphere - indicates active UWB signal -->
       <visual>
         <origin xyz="0 0 0.03" rpy="0 0 0"/>
         <geometry>
@@ -167,7 +167,7 @@
   <xacro:uwb_anchor name="uwb_rr" x="-0.32" y="-0.23"/>
 
   <!-- ================================================ -->
-  <!-- 2D LIDAR – RPLIDAR A1                           -->
+  <!-- 2D LIDAR - RPLIDAR A1                           -->
   <!-- ================================================ -->
   <link name="lidar_link">
     <visual>
@@ -221,7 +221,7 @@
   </gazebo>
 
   <!-- ================================================ -->
-  <!-- ULTRASONIC SENSORS – HC-SR04 (2x front)         -->
+  <!-- ULTRASONIC SENSORS - HC-SR04 (2x front)         -->
   <!-- ================================================ -->
   <xacro:macro name="ultrasonic" params="name y_offset">
     <link name="${name}_us_link">
@@ -269,7 +269,7 @@
   <xacro:ultrasonic name="right" y_offset="-0.10"/>
 
   <!-- ================================================ -->
-  <!-- DIFFERENTIAL DRIVE PLUGIN – Gazebo Harmonic     -->
+  <!-- DIFFERENTIAL DRIVE PLUGIN - Gazebo Harmonic     -->
   <!-- ================================================ -->
   <gazebo>
     <plugin filename="gz-sim-diff-drive-system"

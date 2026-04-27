@@ -7,18 +7,18 @@
   <!-- Visual: v2 realistic design                      -->
   <!-- ================================================ -->
 
-  <!-- Base chassis – v1 dimensions that work with diff-drive -->
+  <!-- Base chassis - v1 dimensions that work with diff-drive -->
   <xacro:property name="cart_length"  value="0.70"/>
   <xacro:property name="cart_width"   value="0.50"/>
   <xacro:property name="cart_height"  value="0.35"/>
   <xacro:property name="cart_mass"    value="15.0"/>
 
-  <!-- Wheels – v1 proven physics values -->
+  <!-- Wheels - v1 proven physics values -->
   <xacro:property name="wheel_radius" value="0.075"/>
   <xacro:property name="wheel_width"  value="0.04"/>
   <xacro:property name="wheel_mass"   value="0.5"/>
 
-  <!-- Basket / Handle – visual only, no mass to avoid CoM instability -->
+  <!-- Basket / Handle - visual only, no mass to avoid CoM instability -->
   <xacro:property name="basket_length" value="0.55"/>
   <xacro:property name="basket_width"  value="0.35"/>
   <xacro:property name="basket_height" value="0.40"/>
@@ -111,7 +111,7 @@
   </link>
 
   <!-- ================================================ -->
-  <!-- WHEEL MACRO – v1 joint convention (proven)       -->
+  <!-- WHEEL MACRO - v1 joint convention (proven)       -->
   <!-- Joint rpy="1.5708 0 0" + axis="0 0 -1"          -->
   <!-- Visual has multi-layer design but NO origin rpy  -->
   <!-- (joint rpy handles the horizontal orientation)   -->
@@ -180,7 +180,7 @@
   <xacro:omni_wheel name="rear_right"  x="-0.25" y="-0.27" z="-0.15"/>
 
   <!-- ================================================ -->
-  <!-- SHOPPING BASKET – visual only, no mass/collision  -->
+  <!-- SHOPPING BASKET - visual only, no mass/collision  -->
   <!-- ================================================ -->
   <link name="basket_link">
     <!-- Corner posts -->
@@ -290,7 +290,7 @@
     <visual><origin xyz="0.22 -${basket_width/2} 0" rpy="0 0 0"/>
       <geometry><cylinder radius="0.004" length="${basket_height}"/></geometry><material name="stainless_steel"/></visual>
 
-    <!-- No collision, no inertial – purely decorative -->
+    <!-- No collision, no inertial - purely decorative -->
     <inertial>
       <mass value="0.001"/>
       <inertia ixx="0.000001" iyy="0.000001" izz="0.000001"
@@ -305,7 +305,7 @@
   </joint>
 
   <!-- ================================================ -->
-  <!-- HANDLE BAR – visual only, no mass/collision      -->
+  <!-- HANDLE BAR - visual only, no mass/collision      -->
   <!-- ================================================ -->
   <link name="handle_link">
     <visual>
@@ -359,7 +359,7 @@
   </joint>
 
   <!-- ================================================ -->
-  <!-- UWB ANCHORS – v2 visual design, v1 positions    -->
+  <!-- UWB ANCHORS - v2 visual design, v1 positions    -->
   <!-- ================================================ -->
   <xacro:macro name="uwb_beacon" params="name x y">
     <link name="${name}_uwb_link">
@@ -405,7 +405,7 @@
   <xacro:uwb_beacon name="uwb_rr" x="-0.32" y="-0.23"/>
 
   <!-- ================================================ -->
-  <!-- 2D LIDAR – v2 visual, v1 position               -->
+  <!-- 2D LIDAR - v2 visual, v1 position               -->
   <!-- ================================================ -->
   <link name="lidar_link">
     <!-- Housing ring -->
@@ -482,7 +482,7 @@
   </gazebo>
 
   <!-- ================================================ -->
-  <!-- ULTRASONIC SENSORS – v2 visual, v1 position     -->
+  <!-- ULTRASONIC SENSORS - v2 visual, v1 position     -->
   <!-- ================================================ -->
   <xacro:macro name="ultrasonic" params="name y_offset">
     <link name="${name}_us_link">
@@ -543,7 +543,7 @@
   <xacro:ultrasonic name="right" y_offset="-0.10"/>
 
   <!-- ================================================ -->
-  <!-- DIFFERENTIAL DRIVE PLUGIN – v1 proven values    -->
+  <!-- DIFFERENTIAL DRIVE PLUGIN - v1 proven values    -->
   <!-- ================================================ -->
   <gazebo>
     <plugin filename="gz-sim-diff-drive-system"

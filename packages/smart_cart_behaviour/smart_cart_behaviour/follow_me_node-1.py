@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-follow_me_node.py  –  UWB Follow-Me + LiDAR Obstacle Avoidance
+follow_me_node.py  -  UWB Follow-Me + LiDAR Obstacle Avoidance
 ===============================================================
 Original UWB follow logic kept exactly as-is.
 LiDAR added on top for obstacle avoidance only.
@@ -215,7 +215,7 @@ class FollowMeNode(Node):
             self.get_logger().info('[UWB] Signal acquired.')
             self._uwb_was_alive = True
         elif not uwb_fresh and self._uwb_was_alive:
-            self.get_logger().warn('[UWB] Signal lost – stopping.')
+            self.get_logger().warn('[UWB] Signal lost - stopping.')
             self._uwb_was_alive = False
 
         if not uwb_fresh:
@@ -273,7 +273,7 @@ class FollowMeNode(Node):
         cmd = Twist()
 
         if self._avoiding:
-            
+
             # Phase 0: TURN RIGHT
             if self._avoid_phase == 0:
                 cmd.linear.x = 0.0

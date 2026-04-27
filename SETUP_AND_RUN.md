@@ -194,7 +194,7 @@ This single launch file starts everything in sequence:
 | t = 6s  | Smart Cart spawned at origin (0, 0) |
 | t = 7s  | Main person (user avatar) spawned at (2.0, 0.0) |
 | t = 8s  | 3 random autonomous pedestrians spawned in the world |
-| t = 9s  | ROS–Gazebo bridge started (topics connected) |
+| t = 9s  | ROS-Gazebo bridge started (topics connected) |
 | t = 10s | All ROS 2 nodes started: `follow_me_node`, `obstacle_stop_node`, `navigation_node`, `uwb_simulator_node`, 3× `random_person_node` |
 | t = 11s | RViz2 launched with pre-configured display |
 | t = 12s | Ready message printed in terminal |
@@ -345,4 +345,4 @@ ros2 topic echo /nav/current_mode
 | `smart_cart_behaviour` | `follow_me_node` (UWB tracking + P-controller), `obstacle_stop_node` (LiDAR 3-zone safety), `teleop_person_node` (person + remote control), `cart_teleop_node` (direct cart debug teleop), `random_person_node` (autonomous pedestrian) |
 | `smart_cart_navigation` | `navigation_node` (IDLE/FOLLOW/STOP state machine), `uwb_simulator_node` (4-anchor UWB + Kalman filter) |
 | `smart_cart_description` | URDF/Xacro differential-drive cart model with LiDAR and depth camera |
-| `smart_cart_gazebo` | Large supermarket world, ROS–Gz bridge config, RViz config |
+| `smart_cart_gazebo` | Large supermarket world, ROS-Gz bridge config, RViz config |

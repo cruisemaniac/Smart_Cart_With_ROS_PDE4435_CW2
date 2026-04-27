@@ -10,7 +10,7 @@ setup(
     zip_safe=True,
     maintainer='jayashanka',
     maintainer_email='jayasankaanushan199@gmail.com',
-    description='Smart Cart behaviour nodes – follow-me, obstacle stop, person teleop',
+    description='Smart Cart behaviour nodes - follow-me, obstacle stop, person teleop',
     license='MIT',
 
     data_files=[

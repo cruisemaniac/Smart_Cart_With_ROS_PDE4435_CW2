@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-cart_teleop_node.py  –  Direct cart teleop for testing
+cart_teleop_node.py  -  Direct cart teleop for testing
 =======================================================
 Publishes directly to /cmd_vel (bypasses cmd_vel_raw and obstacle_stop_node)
 to verify raw cart movement in Gazebo.

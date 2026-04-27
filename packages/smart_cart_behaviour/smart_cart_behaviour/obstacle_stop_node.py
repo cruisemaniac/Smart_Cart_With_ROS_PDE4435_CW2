@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Obstacle Stop Node – Smart Cart
+Obstacle Stop Node - Smart Cart
 3-zone speed profile from CW1 Table 12:
   < 0.30 m  →  Emergency stop  (0% speed)
   < 0.80 m  →  Slow zone       (50% speed)
@@ -92,7 +92,7 @@ class ObstacleStopNode(Node):
             self._emergency_stop = True
             self._speed_factor   = 0.0
             self.get_logger().warn(
-                f'EMERGENCY STOP – obstacle at {dist:.2f}m',
+                f'EMERGENCY STOP - obstacle at {dist:.2f}m',
                 throttle_duration_sec=1.0)
         elif dist < SLOW_ZONE_M:
             self._emergency_stop = False

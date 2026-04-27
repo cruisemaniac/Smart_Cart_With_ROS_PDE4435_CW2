@@ -88,7 +88,7 @@ ros2 run smart_cart_behaviour teleop_person_node
 | `smart_cart_behaviour` | `follow_me_node`, `obstacle_stop_node`, `teleop_person_node`, `cart_teleop_node`, `random_person_node` |
 | `smart_cart_navigation` | `navigation_node`, `uwb_simulator_node` |
 | `smart_cart_description` | URDF/Xacro robot model |
-| `smart_cart_gazebo` | Gazebo world, ROS–Gz bridge config, RViz config |
+| `smart_cart_gazebo` | Gazebo world, ROS-Gz bridge config, RViz config |
 
 ---
 

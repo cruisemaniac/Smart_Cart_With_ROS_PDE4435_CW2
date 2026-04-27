@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-navigation_node.py  –  Smart Cart Navigation State Machine
+navigation_node.py  -  Smart Cart Navigation State Machine
 
-IMPORTANT: Uses self.get_clock().now() throughout – NOT time.time().
+IMPORTANT: Uses self.get_clock().now() throughout - NOT time.time().
 This is required for use_sim_time=True compatibility. Mixing wall
 clock with sim time causes the watchdog to fire immediately on startup
 and silently breaks the node.
@@ -10,7 +10,7 @@ and silently breaks the node.
 Modes
 -----
   IDLE    Cart stationary. Waiting for remote button 2.
-  FOLLOW  Follow-Me active – follow_me_node drives the cart.
+  FOLLOW  Follow-Me active - follow_me_node drives the cart.
   STOP    Remote button 1. Cart locked until button 2 pressed.
   MANUAL  Reserved for future use.
 
@@ -22,12 +22,12 @@ Remote buttons (from teleop_person_node)
 
 Topics
 ------
-  Sub: /scan              LaserScan  – detect person in front arc
-  Sub: /odom              Odometry   – track cart distance
-  Sub: /nav/mode_cmd      String     – remote button commands
-  Pub: /nav/current_mode  String     – current mode (2 Hz)
-  Pub: /nav/status        String     – human-readable status (2 Hz)
-  Pub: /cmd_vel_raw       Twist      – zero velocity in STOP/IDLE
+  Sub: /scan              LaserScan  - detect person in front arc
+  Sub: /odom              Odometry   - track cart distance
+  Sub: /nav/mode_cmd      String     - remote button commands
+  Pub: /nav/current_mode  String     - current mode (2 Hz)
+  Pub: /nav/status        String     - human-readable status (2 Hz)
+  Pub: /cmd_vel_raw       Twist      - zero velocity in STOP/IDLE
 """
 
 import math
@@ -71,7 +71,7 @@ class NavigationNode(Node):
         self._max_spd  = self.get_parameter('max_speed').value
         self._timeout  = self.get_parameter('target_timeout').value
 
-        # ── State  (use ROS clock – compatible with use_sim_time) ────────
+        # ── State  (use ROS clock - compatible with use_sim_time) ────────
         self._target_visible  = False
         self._last_target_sec = self.get_clock().now().nanoseconds / 1e9
         self._cart_x          = 0.0
@@ -107,7 +107,7 @@ class NavigationNode(Node):
             f'Press remote button [2] to start following'
         )
     # ════════════════════════════════════════════════════════════════════
-    # SCAN CALLBACK  –  detect person presence with uwb
+    # SCAN CALLBACK  -  detect person presence with uwb
     # ════════════════════════════════════════════════════════════════════
     def _uwb_nav_cb(self, msg):
         """Keep watchdog alive as long as UWB tag is visible."""
@@ -117,7 +117,7 @@ class NavigationNode(Node):
 
 
     # ════════════════════════════════════════════════════════════════════
-    # SCAN CALLBACK  –  detect person presence in front arc
+    # SCAN CALLBACK  -  detect person presence in front arc
     # ════════════════════════════════════════════════════════════════════
     def _scan_cb(self, msg: LaserScan):
         arc_rad   = math.radians(PERSON_ARC_DEG)
@@ -136,11 +136,11 @@ class NavigationNode(Node):
 
         self._target_visible = found
         if found:
-            # Use ROS clock – works correctly with use_sim_time=True
+            # Use ROS clock - works correctly with use_sim_time=True
             self._last_target_sec = self.get_clock().now().nanoseconds / 1e9
 
     # ════════════════════════════════════════════════════════════════════
-    # ODOMETRY CALLBACK  –  track distance travelled
+    # ODOMETRY CALLBACK  -  track distance travelled
     # ════════════════════════════════════════════════════════════════════
     def _odom_cb(self, msg: Odometry):
         x = msg.pose.pose.position.x
@@ -155,7 +155,7 @@ class NavigationNode(Node):
         self._prev_y = y
 
     # ════════════════════════════════════════════════════════════════════
-    # MODE COMMAND CALLBACK  –  remote button presses
+    # MODE COMMAND CALLBACK  -  remote button presses
     # ════════════════════════════════════════════════════════════════════
     def _mode_cmd_cb(self, msg: String):
         requested = msg.data.strip().upper()
@@ -167,7 +167,7 @@ class NavigationNode(Node):
         self.get_logger().info(f'[REMOTE] {old} → {self._mode}')
 
     # ════════════════════════════════════════════════════════════════════
-    # STATUS TIMER  –  publish mode + status, hold zero in STOP/IDLE
+    # STATUS TIMER  -  publish mode + status, hold zero in STOP/IDLE
     # ════════════════════════════════════════════════════════════════════
     def _status_timer_cb(self):
         mode_msg      = String()
@@ -188,7 +188,7 @@ class NavigationNode(Node):
             self._cmd_pub.publish(Twist())
 
     # ════════════════════════════════════════════════════════════════════
-    # WATCHDOG  –  if target lost for timeout → go IDLE
+    # WATCHDOG  -  if target lost for timeout → go IDLE
     # ════════════════════════════════════════════════════════════════════
     def _watchdog_cb(self):
         if self._mode != MODE_FOLLOW:
