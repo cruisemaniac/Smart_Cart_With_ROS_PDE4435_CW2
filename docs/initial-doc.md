@@ -1,3 +1,11 @@
+> **Note:** This is the initial planning document written during the CW1 ideation phase.
+> It reflects early design decisions and does not represent the final implementation.
+> Some details have changed: the project uses **ROS 2 Jazzy** (not Humble), a
+> **proportional controller** (not DWA), and a **Kalman2D filter** (not EKF).
+> See the report and `SETUP_AND_RUN.md` for the actual system.
+
+---
+
 # **Integration of an Autonomous Follow-Me Shopping Cart**
 **Module:** PDE4435 - Robotic System Integration 
 

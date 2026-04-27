@@ -1,6 +1,7 @@
 # Smart Cart ROS 2 — Setup & Run Guide
 
-This guide walks you through cloning the repository, building the workspace, and launching the full simulation from scratch.
+This guide walks you through cloning the repository, building the workspace,
+and launching the full simulation from scratch.
 
 ---
 
@@ -11,10 +12,9 @@ Make sure you have the following installed before starting:
 - Ubuntu 24.04
 - ROS 2 Jazzy (full desktop install)
 - Gazebo Harmonic
-- Python 3 venv tooling
-- joint_state_publisher
-- Required ROS packages:
+- Python 3 with venv support
 
+**Install required ROS packages:**
 ```bash
 sudo apt install -y \
   ros-jazzy-ros-gz \
@@ -26,10 +26,6 @@ sudo apt install -y \
   ros-jazzy-rviz2 \
   python3-venv \
   python3-pip
-```
-
-```
-To be install xterm
 
 sudo apt install xterm
 ```
@@ -76,7 +72,8 @@ jazzy_ws/
 
 ## Step 3 — Symlink packages so colcon can find them
 
-The ROS packages live inside the `packages/` subfolder. You need to make them visible to `colcon` by symlinking them into `src/`:
+The ROS packages live inside the `packages/` subfolder. You need to make them
+visible to `colcon` by symlinking them into `src/`:
 
 ```bash
 cd ~/ros/jazzy_ws/src
@@ -91,14 +88,16 @@ After this, your `src/` folder should look like:
 
 ```
 src/
-├── Smart_Cart_With_ROS_PDE4435_CW2/   ← full repo
-├── smart_cart_behaviour  → (symlink)
-├── smart_cart_description → (symlink)
-├── smart_cart_gazebo     → (symlink)
-└── smart_cart_navigation → (symlink)
+├── Smart_Cart_With_ROS_PDE4435_CW2/    ← full repo
+├── smart_cart_behaviour                → (symlink)
+├── smart_cart_description             → (symlink)
+├── smart_cart_gazebo                  → (symlink)
+└── smart_cart_navigation              → (symlink)
 ```
 
-> **Why symlinks?** colcon expects packages to be direct children of `src/`. Since this repo stores packages inside a `packages/` subfolder, symlinks bridge that gap without moving files.
+> **Why symlinks?** `colcon` expects packages to be direct children of `src/`.
+> Since this repo stores packages inside a `packages/` subfolder, symlinks bridge
+> that gap without moving files.
 
 ---
 
@@ -121,25 +120,18 @@ source ~/.bashrc
 
 ## Step 5 — Set up the Python virtual environment
 
-Create and activate a virtual environment outside the workspace, then install the Python requirements used by the Smart Cart nodes:
-
 ```bash
 python3 -m venv --system-site-packages ~/.venvs/smart_cart_ros
 source ~/.venvs/smart_cart_ros/bin/activate
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r ~/ros/jazzy_ws/src/Smart_Cart_With_ROS_PDE4435_CW2/requirements.txt
 ```
 
-The root [requirements.txt](requirements.txt) currently includes the Python packages used by the repo-level Python code:
-
-```text
-numpy
-pytest
-```
-
-> **Note:** `xacro`, `launch`, `launch_ros`, and the other ROS imports are installed through ROS apt packages, not `requirements.txt`. The `--system-site-packages` flag lets the virtual environment see those ROS Python modules.
-
-> **Tip:** Keep the virtual environment outside the workspace tree so `colcon` does not try to inspect it during builds.
+> **Note:** `--system-site-packages` lets the virtual environment see ROS Python
+> modules installed via `apt` (xacro, launch, etc.).
+>
+> **Tip:** Keep the virtual environment outside the workspace tree so `colcon`
+> does not try to inspect it during builds.
 
 ---
 
@@ -160,14 +152,12 @@ Starting >>> smart_cart_behaviour
 Starting >>> smart_cart_description
 Starting >>> smart_cart_gazebo
 Starting >>> smart_cart_navigation
-Finished <<< smart_cart_behaviour [~1.5s]
-Finished <<< smart_cart_description [~0.6s]
-Finished <<< smart_cart_gazebo [~0.5s]
-Finished <<< smart_cart_navigation [~1.3s]
+Finished <<< smart_cart_behaviour  [~2s]
+Finished <<< smart_cart_description [~0.8s]
+Finished <<< smart_cart_gazebo     [~0.7s]
+Finished <<< smart_cart_navigation [~2s]
 Summary: 4 packages finished
 ```
-
-If any package fails, check that all symlinks in Step 3 are correct and that the virtual environment is active when you run `colcon build`.
 
 ---
 
@@ -179,13 +169,7 @@ After building, source the workspace install:
 source ~/ros/jazzy_ws/install/setup.bash
 ```
 
-If you used the virtual environment, reactivate it in any new terminal before launching:
-
-```bash
-source ~/.venvs/smart_cart_ros/bin/activate
-```
-
-To do this automatically on every new terminal:
+To do this automatically in every new terminal:
 
 ```bash
 echo "source ~/ros/jazzy_ws/install/setup.bash" >> ~/.bashrc
@@ -202,81 +186,124 @@ source ~/.bashrc
 ros2 launch smart_cart_behaviour start_all.launch.py
 ```
 
-This single launch file starts everything in order:
+This single launch file starts everything in sequence:
 
-| Delay | What starts |
+| Time | What starts |
 |---|---|
-| Immediately | Gazebo with supermarket world |
-| Immediately | Robot State Publisher (loads URDF) |
-| After 3s | Robot spawned in Gazebo |
-| After 4s | ROS–Gazebo bridge (topics connected) |
-| After 5s | `follow_me_node`, `obstacle_stop_node`, `navigation_node` |
-| After 6s | RViz2 |
+| t = 0s  | Gazebo Harmonic with large supermarket world + Robot State Publisher |
+| t = 6s  | Smart Cart spawned at origin (0, 0) |
+| t = 7s  | Main person (user avatar) spawned at (2.0, 0.0) |
+| t = 8s  | 3 random autonomous pedestrians spawned in the world |
+| t = 9s  | ROS–Gazebo bridge started (topics connected) |
+| t = 10s | All ROS 2 nodes started: `follow_me_node`, `obstacle_stop_node`, `navigation_node`, `uwb_simulator_node`, 3× `random_person_node` |
+| t = 11s | RViz2 launched with pre-configured display |
+| t = 12s | Ready message printed in terminal |
+
+Wait for the **Ready** message before opening the teleop terminal.
 
 ---
 
 ## Step 9 — Verify everything is running
 
-Open a new terminal and check nodes and topics:
+Open a new terminal and check:
 
 ```bash
 # Check all nodes are alive
 ros2 node list
+```
 
-# Expected output:
-# /follow_me_node
-# /obstacle_stop_node
-# /navigation_node
-# /robot_state_publisher
-# /ros_gz_bridge
-# /rviz2
+Expected output:
+```
+/follow_me_node
+/navigation_node
+/obstacle_stop_node
+/random_person_node
+/random_person_2_node
+/random_person_3_node
+/robot_state_publisher
+/ros_gz_bridge
+/rviz2
+/uwb_simulator_node
+```
 
-# Check topics are active
+Check key topics are active:
+```bash
 ros2 topic list
-
 # Key topics you should see:
-# /scan           ← LiDAR data from Gazebo
-# /cmd_vel_raw    ← velocity from follow_me_node
-# /cmd_vel        ← final velocity to robot
-# /tf  /tf_static ← transforms
+# /scan              ← LiDAR data from Gazebo
+# /uwb/distances     ← simulated UWB anchor ranges
+# /cmd_vel_raw       ← follow_me_node velocity output
+# /cmd_vel           ← final velocity after obstacle safety filter
+# /nav/current_mode  ← IDLE / FOLLOW / STOP
+# /person/odom       ← user avatar odometry
 ```
 
 ---
 
-## Step 10 — Test the follow-me behaviour
+## Step 10 — Control the simulation (teleop)
 
-The cart uses LiDAR to detect the nearest object within a 60° front arc and follows it at 1.0 m distance. Since there is no person in the simulation by default, you need to spawn a target object.
-
-Open a **new terminal** and run:
+Open a **new terminal** and run the person teleop node:
 
 ```bash
 source ~/.venvs/smart_cart_ros/bin/activate
 source ~/ros/jazzy_ws/install/setup.bash
 
-ros2 run ros_gz_sim create \
-  -name target_person \
-  -string "<?xml version='1.0'?>
-<sdf version='1.6'>
-  <model name='target_person'>
-    <static>true</static>
-    <link name='link'>
-      <visual name='visual'>
-        <geometry><box><size>0.5 0.5 1.7</size></box></geometry>
-      </visual>
-      <collision name='collision'>
-        <geometry><box><size>0.5 0.5 1.7</size></box></geometry>
-      </collision>
-    </link>
-  </model>
-</sdf>" \
-  -x 1.5 -y 0.0 -z 0.85
+ros2 run smart_cart_behaviour teleop_person_node
 ```
 
-The cart should drive toward the box and stop at ~1.0 m. Watch the velocity commands:
+### Person movement
+
+| Key | Action |
+|---|---|
+| `W` / `↑` | Move person forward |
+| `S` / `↓` | Move person backward |
+| `A` / `←` | Turn person left |
+| `D` / `→` | Turn person right |
+| `SPACE` | Stop person |
+| `+` / `-` | Speed up / slow down |
+| `R` | Reset speed to default (0.6 m/s) |
+
+### Cart remote control
+
+| Key | Action |
+|---|---|
+| `2` | **FOLLOW** — cart starts following the person at 1.0 m |
+| `1` | **STOP** — cart stops immediately |
+| `3` | **IDLE** — cart standby, holds position |
+
+**Typical test sequence:**
+1. Wait for the Ready message from the launch terminal
+2. Run `teleop_person_node` in a new terminal
+3. Press `2` to activate FOLLOW mode
+4. Use `W/A/S/D` to walk the person around — the cart follows
+5. Walk toward the obstacle box to test emergency stop
+6. Press `1` to stop the cart, `3` to return to idle
+
+---
+
+## Step 11 — Direct cart testing (optional)
+
+To test raw cart movement independently (bypasses the follow-me pipeline):
 
 ```bash
-ros2 topic echo /cmd_vel_raw
+ros2 run smart_cart_behaviour cart_teleop_node
 ```
+
+This publishes directly to `/cmd_vel`, skipping `follow_me_node` and
+`obstacle_stop_node`. Use this to verify the cart URDF and Gazebo
+differential drive plugin are working correctly.
+
+| Key | Action |
+|---|---|
+| `W` | Forward |
+| `S` | Backward |
+| `A` | Turn left |
+| `D` | Turn right |
+| `Q / E` | Forward + turn left / right |
+| `Z / C` | Backward + turn left / right |
+| `SPACE` | Stop |
+| `+ / -` | Speed up / down |
+| `ESC` | Quit |
 
 ---
 
@@ -289,33 +316,33 @@ ros2 topic echo /cmd_vel_raw
 → You forgot to `source install/setup.bash` after building (Step 7).
 
 **`ModuleNotFoundError: No module named 'xacro'`**
-→ Make sure ROS 2 Jazzy and `ros-jazzy-xacro` are installed, then source `/opt/ros/jazzy/setup.bash` before launching.
-
-**`pip` cannot find `numpy` or `pytest`**
-→ Activate the virtual environment and run `pip install -r requirements.txt` from the repository root.
-
-**`colcon build` starts scanning the virtual environment**
-→ Keep the venv outside the workspace tree as shown in Step 5.
+→ Make sure `ros-jazzy-xacro` is installed and you sourced `/opt/ros/jazzy/setup.bash`.
 
 **Gazebo opens but robot is not visible**
-→ Wait ~5 seconds for the spawn timer. If still missing, check `/robot_description` topic:
+→ The cart spawns at t=6s. Wait for the Ready message. If still missing, check:
 ```bash
 ros2 topic echo /robot_description
 ```
 
-**`No target detected – cart stopped` repeating**
-→ This is normal until you spawn a target object (Step 9).
+**Cart does not follow the person**
+→ Make sure you pressed `2` (FOLLOW) in the teleop terminal. Check the mode:
+```bash
+ros2 topic echo /nav/current_mode
+```
 
 **RViz2 shows no robot model**
-→ In RViz2, set Fixed Frame to `base_link` and add a RobotModel display subscribed to `/robot_description`.
+→ In RViz2 set Fixed Frame to `odom` and add a RobotModel display subscribed to `/robot_description`.
+
+**`colcon build` starts scanning the virtual environment**
+→ Keep the venv outside the workspace tree as shown in Step 5.
 
 ---
 
-## Package overview
+## Package Overview
 
 | Package | Purpose |
 |---|---|
-| `smart_cart_behaviour` | `follow_me_node` (LiDAR following), `obstacle_stop_node` (safety stop) |
-| `smart_cart_navigation` | `navigation_node` (routes `cmd_vel_raw` → `cmd_vel`) |
-| `smart_cart_description` | URDF/Xacro robot model |
-| `smart_cart_gazebo` | Gazebo world, bridge config, simulation launch |
+| `smart_cart_behaviour` | `follow_me_node` (UWB tracking + P-controller), `obstacle_stop_node` (LiDAR 3-zone safety), `teleop_person_node` (person + remote control), `cart_teleop_node` (direct cart debug teleop), `random_person_node` (autonomous pedestrian) |
+| `smart_cart_navigation` | `navigation_node` (IDLE/FOLLOW/STOP state machine), `uwb_simulator_node` (4-anchor UWB + Kalman filter) |
+| `smart_cart_description` | URDF/Xacro differential-drive cart model with LiDAR and depth camera |
+| `smart_cart_gazebo` | Large supermarket world, ROS–Gz bridge config, RViz config |

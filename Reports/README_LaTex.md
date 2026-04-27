@@ -8,8 +8,19 @@ Reports/
 └── Smart_Cart_CW2_PDE4435_Report_v1_0/
     ├── main.tex            # Main entry point
     ├── references.bib      # Bibliography file
-    ├── images/             # Store all screenshots/diagrams here
-    └── sections/           # Individual chapter .tex files
+    ├── images/             # Screenshots and diagrams
+    └── sections/
+        ├── intro.tex
+        ├── related_works.tex
+        ├── system_design_and_simulation.tex
+        ├── non_functional_requirements.tex
+        ├── experimental_results.tex
+        ├── feasibility_analysis.tex
+        ├── testing_specifications.tex
+        ├── future_Improvements.tex
+        ├── conclusion.tex
+        ├── use_of_genAI.tex          # Appendix A
+        └── design_thinking_n_storyboard.tex  # Appendix B
 ```
 
 ---
