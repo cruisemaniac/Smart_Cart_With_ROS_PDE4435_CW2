@@ -263,9 +263,9 @@
     </model>
 
     <!-- ── Ceiling light housings (visual only) ──────────────────────────── -->
-    <model name="lh_a"><static>true</static><pose>-4 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model>
+    <!-- <model name="lh_a"><static>true</static><pose>-4 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model>
     <model name="lh_b"><static>true</static><pose> 2 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model>
-    <model name="lh_c"><static>true</static><pose> 8 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model>
+    <model name="lh_c"><static>true</static><pose> 8 0 2.95 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>1.2 0.18 0.04</size></box></geometry><material><ambient>0.96 0.96 0.96 1</ambient><diffuse>0.96 0.96 0.96 1</diffuse></material></visual></link></model> -->
 
     <!-- ── Aisle overhead signs (visual only) ────────────────────────────── -->
     <model name="sign_A_pole"><static>true</static><pose>3.5 0 2.1 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.04 0.04 0.7</size></box></geometry><material><ambient>0.68 0.68 0.68 1</ambient><diffuse>0.68 0.68 0.68 1</diffuse></material></visual></link></model>

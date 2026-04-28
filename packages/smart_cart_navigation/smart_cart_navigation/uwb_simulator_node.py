@@ -15,6 +15,7 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32, Float32MultiArray
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
+from tf2_msgs.msg import TFMessage
 
 ANCHORS = np.array([
     [ 0.32,  0.23],
@@ -45,8 +46,13 @@ class UWBSimulatorNode(Node):
         self._person_odom_origin_x = None
         self._person_odom_origin_y = None
 
-        self.create_subscription(Odometry, '/odom',        self._cart_odom_cb,   10)
-        self.create_subscription(Odometry, '/person/odom', self._person_odom_cb, 10)
+        # True when Gazebo ground-truth pose is available — overrides odom
+        self._use_ground_truth = False
+
+        self.create_subscription(Odometry,  '/odom',            self._cart_odom_cb,   10)
+        self.create_subscription(Odometry,  '/person/odom',     self._person_odom_cb, 10)
+        # Ground-truth world pose from Gazebo (only present in v3 launch)
+        self.create_subscription(TFMessage, '/gz/dynamic_poses', self._gz_poses_cb,   10)
 
         self._distances_pub = self.create_publisher(Float32MultiArray, '/uwb/distances', 10)
         self._distance_pub  = self.create_publisher(Float32,           '/uwb/distance',  10)
@@ -71,7 +77,25 @@ class UWBSimulatorNode(Node):
         cosy = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
         self._cart_yaw = math.atan2(siny, cosy)
 
+    def _gz_poses_cb(self, msg: TFMessage):
+        """Ground-truth Gazebo world poses — accurate even after collisions."""
+        for tf in msg.transforms:
+            # Gazebo publishes the person model pose as child_frame_id="person"
+            if tf.child_frame_id in ('person', 'person::person'):
+                if not self._use_ground_truth:
+                    self._use_ground_truth = True
+                    self.get_logger().info(
+                        '[UWB] Gazebo ground-truth pose active — '
+                        'person position is collision-proof.')
+                self._person_world_x = tf.transform.translation.x
+                self._person_world_y = tf.transform.translation.y
+                self._person_ready   = True
+                return
+
     def _person_odom_cb(self, msg: Odometry):
+        if self._use_ground_truth:
+            return   # Gazebo ground truth is available — odom not needed
+
         ox = msg.pose.pose.position.x
         oy = msg.pose.pose.position.y
         if self._person_odom_origin_x is None:

@@ -318,7 +318,24 @@
       <wheel_radius>0.125</wheel_radius>
 
       <topic>/cmd_vel</topic>
+      <odom_topic>odom</odom_topic>
+      <tf_topic>/tf</tf_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_link</child_frame_id>
+      <odom_publish_frequency>20</odom_publish_frequency>
+      <max_linear_velocity>1.2</max_linear_velocity>
+      <max_linear_acceleration>1.0</max_linear_acceleration>
+      <min_linear_acceleration>-1.0</min_linear_acceleration>
+      <max_angular_acceleration>2.0</max_angular_acceleration>
 
+    </plugin>
+  </gazebo>
+
+  <!-- Joint state publisher -->
+  <gazebo>
+    <plugin filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher">
+      <topic>joint_states</topic>
     </plugin>
   </gazebo>
   
@@ -354,6 +371,7 @@
 
 <gazebo reference="lidar_link">
   <sensor name="lidar" type="gpu_lidar">
+    <gz_frame_id>lidar_link</gz_frame_id>
     <always_on>true</always_on>
     <update_rate>10</update_rate>
     <visualize>true</visualize>
@@ -452,7 +470,7 @@
 <joint name="uwb_fl_joint" type="fixed">
   <parent link="base_link"/>
   <child link="uwb_fl"/>
-  <origin xyz="0.32 0.27 0.3"/>
+  <origin xyz="0.32 0.23 0.3"/>
 </joint>
 
 <!-- uwb_fr-->
@@ -465,7 +483,7 @@
 <joint name="uwb_fr_joint" type="fixed">
   <parent link="base_link"/>
   <child link="uwb_fr"/>
-  <origin xyz="0.32 -0.27 0.3"/>
+  <origin xyz="0.32 -0.23 0.3"/>
 </joint>
 
 <!-- uwb_rl-->
@@ -478,7 +496,7 @@
 <joint name="uwb_rl_joint" type="fixed">
   <parent link="base_link"/>
   <child link="uwb_rl"/>
-  <origin xyz="-0.32 0.27 0.3"/>
+  <origin xyz="-0.32 0.23 0.3"/>
 </joint>
 
 <!-- uwb_rr-->
@@ -491,7 +509,7 @@
 <joint name="uwb_rr_joint" type="fixed">
   <parent link="base_link"/>
   <child link="uwb_rr"/>
-  <origin xyz="-0.32 -0.27 0.3"/>
+  <origin xyz="-0.32 -0.23 0.3"/>
 </joint>
 
 </robot>

@@ -30,7 +30,7 @@
         <pose>0 0 0.90 0 0 0</pose>
         <mass>70.0</mass>
         <inertia>
-          <ixx>10.0</ixx><iyy>10.0</iyy><izz>1.5</izz>
+          <ixx>10.0</ixx><iyy>10.0</iyy><izz>20.0</izz>
           <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
         </inertia>
       </inertial>
@@ -41,6 +41,14 @@
         <geometry>
           <cylinder><radius>0.22</radius><length>1.4</length></cylinder>
         </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.01</mu>
+              <mu2>0.01</mu2>
+            </ode>
+          </friction>
+        </surface>
       </collision>
 
       <!-- ══════════════════════════════════════════ -->
@@ -388,7 +396,7 @@
       <axis>
         <xyz>0 0 -1</xyz>
         <limit><lower>-1e16</lower><upper>1e16</upper></limit>
-        <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>
+        <dynamics><damping>1.5</damping><friction>0.05</friction></dynamics>
       </axis>
     </joint>
 
@@ -398,7 +406,7 @@
       <axis>
         <xyz>0 0 -1</xyz>
         <limit><lower>-1e16</lower><upper>1e16</upper></limit>
-        <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>
+        <dynamics><damping>1.5</damping><friction>0.05</friction></dynamics>
       </axis>
     </joint>
 
@@ -424,7 +432,7 @@
       <max_linear_velocity>1.5</max_linear_velocity>
       <max_angular_velocity>2.0</max_angular_velocity>
       <max_linear_acceleration>2.0</max_linear_acceleration>
-      <max_angular_acceleration>5.0</max_angular_acceleration>
+      <max_angular_acceleration>0.5</max_angular_acceleration>
       <odom_publish_frequency>20</odom_publish_frequency>
       <topic>person/cmd_vel</topic>
       <odom_topic>person/odom</odom_topic>

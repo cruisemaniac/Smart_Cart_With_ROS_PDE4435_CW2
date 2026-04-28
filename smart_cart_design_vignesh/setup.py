@@ -23,8 +23,15 @@ setup(
 
     ('share/' + package_name, ['package.xml']),
 
+    # ✅ config files
+    ('share/' + package_name + '/config', ['config/pose_bridge.yaml']),
+
     # ✅ launch files
-    ('share/' + package_name + '/launch', ['launch/gazebo.launch.py']),
+    ('share/' + package_name + '/launch', [
+        'launch/gazebo.launch.py',
+        'launch/preview_cart3.launch.py',
+        'launch/start_all_v3.launch.py',
+    ]),
 
     # ✅ URDF files
     ('share/' + package_name + '/urdf', ['urdf/smart_cart_3.urdf']),

@@ -1,0 +1,8 @@
+# Bridges Gazebo's true physics world poses to ROS.
+# This gives ground-truth position for all models regardless of odometry drift
+# caused by physical collisions (e.g. random pedestrian hitting the person).
+- ros_topic_name: /gz/dynamic_poses
+  gz_topic_name:  /world/supermarket/dynamic_pose/info
+  ros_type_name:  tf2_msgs/msg/TFMessage
+  gz_type_name:   gz.msgs.Pose_V
+  direction: GZ_TO_ROS

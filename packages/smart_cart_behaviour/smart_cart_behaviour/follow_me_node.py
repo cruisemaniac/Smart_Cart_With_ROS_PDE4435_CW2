@@ -43,22 +43,25 @@ ANCHORS = np.array([
 ])
 
 # ── UWB following tuning ───────────────────────────────────────────────────
-FOLLOW_DIST_M   = 1.0
-DEAD_ZONE_M     = 0.15
+FOLLOW_DIST_M        = 1.0
+CLOSE_ENOUGH_ENTER_M = 1.2   # enter dead zone below this distance
+CLOSE_ENOUGH_EXIT_M  = 1.6   # only resume following once person moves beyond this
+DEAD_ZONE_M          = 0.15
 MAX_LINEAR_VEL  = 0.8
 MAX_ANGULAR_VEL = 1.2
 KP_LINEAR       = 0.6
 KP_ANGULAR      = 0.6
-ANGLE_DEADBAND  = 0.15
+ANGLE_DEADBAND  = 0.25    # wider band stops oscillation when person is straight ahead
 UWB_TIMEOUT_SEC = 1.0
-KALMAN_WARMUP   = 10
+KALMAN_WARMUP   = 20      # more cycles before angular commands are issued
 
 # ── LiDAR obstacle avoidance tuning ───────────────────────────────────────
 FRONT_HALF_DEG     = 40    # ±degrees that count as "straight ahead"
 SIDE_HALF_DEG      = 80    # outer edge of side clearance check
-OBSTACLE_SLOW_DIST = 1.00  # m — avoidance starts blending in
-OBSTACLE_STOP_DIST = 0.50  # m — forward motion stops (no wheel slip)
-AVOID_ANG_GAIN     = 1.8   # avoidance angular velocity scale
+OBSTACLE_SLOW_DIST = 1.00  # m — cart starts slowing
+OBSTACLE_STOP_DIST = 0.60  # m — triggers stop-and-turn avoidance
+AVOID_ANG_GAIN     = 1.8   # angular scale used in slow zone blend
+AVOID_HOLD_SEC     = 1.0   # seconds to hold-and-turn before re-checking
 
 
 class FollowMeNode(Node):
@@ -73,6 +76,14 @@ class FollowMeNode(Node):
         self._kf            = Kalman2D()
         self._kf_cycles     = 0
         self._scan          = None   # latest LaserScan
+
+        # ── Obstacle avoidance state machine ──────────────────────────────
+        self._avoiding      = False
+        self._avoid_start_t = 0.0
+        self._avoid_dir     = 1.0   # +1 = turn left, -1 = turn right
+
+        # Dead-zone hysteresis — prevents flicker at the boundary
+        self._is_close      = False
 
         self.create_subscription(
             String,            '/nav/current_mode', self._mode_cb, 10)
@@ -101,8 +112,11 @@ class FollowMeNode(Node):
             if self._mode != 'FOLLOW':
                 self._cmd_pub.publish(Twist())
             else:
-                self._kf        = Kalman2D()
-                self._kf_cycles = 0
+                self._kf            = Kalman2D()
+                self._kf_cycles     = 0
+                self._avoiding      = False
+                self._avoid_start_t = 0.0
+                self._is_close      = False
                 self.get_logger().info('[UWB] Kalman reset for new FOLLOW session.')
 
     def _uwb_cb(self, msg: Float32MultiArray):
@@ -211,6 +225,7 @@ class FollowMeNode(Node):
 
         if self._kf_cycles < KALMAN_WARMUP:
             px, py = px_raw, py_raw
+            # During warmup only move forward — no angular to prevent spinning
             self.get_logger().info(
                 f'[UWB] Warming up Kalman ({self._kf_cycles}/{KALMAN_WARMUP}) '
                 f'raw=({px_raw:.2f},{py_raw:.2f})',
@@ -222,6 +237,26 @@ class FollowMeNode(Node):
         distance = math.sqrt(px**2 + py**2)
         angle    = math.atan2(py, px)
 
+        # ── Dead-zone with hysteresis ──────────────────────────────────────
+        # Enter dead zone when close; only exit once person moves further away.
+        # This prevents the cart jittering at the boundary due to UWB noise.
+        if self._is_close:
+            if distance > CLOSE_ENOUGH_EXIT_M:
+                self._is_close = False
+                self.get_logger().info(
+                    f'[UWB] Person moved away ({distance:.2f}m) — resuming follow.')
+        else:
+            if distance < CLOSE_ENOUGH_ENTER_M:
+                self._is_close = True
+                self._avoiding = False   # cancel any pending avoidance
+                self.get_logger().info(
+                    f'[UWB] Close enough ({distance:.2f}m) — holding still.')
+
+        if self._is_close:
+            # Fully inside dead zone — skip LiDAR avoidance too (person IS the obstacle)
+            self._cmd_pub.publish(Twist())
+            return
+
         error = distance - FOLLOW_DIST_M
 
         if error > DEAD_ZONE_M:
@@ -229,42 +264,61 @@ class FollowMeNode(Node):
         else:
             uwb_linear = 0.0
 
-        if abs(angle) < ANGLE_DEADBAND:
+        # Suppress angular during Kalman warmup — avoids spin on first signal
+        if self._kf_cycles < KALMAN_WARMUP or abs(angle) < ANGLE_DEADBAND:
             uwb_angular = 0.0
         else:
             uwb_angular = max(-MAX_ANGULAR_VEL,
                               min(MAX_ANGULAR_VEL, KP_ANGULAR * angle))
 
-        # ── LiDAR obstacle avoidance ───────────────────────────────────────
+        # ── LiDAR obstacle avoidance state machine ────────────────────────
         min_front, min_left, min_right = self._obstacle_sectors()
 
-        if min_front < OBSTACLE_SLOW_DIST:
-            # proximity: 0.0 at OBSTACLE_SLOW_DIST, 1.0 at OBSTACLE_STOP_DIST
+        if self._avoiding:
+            elapsed = time.monotonic() - self._avoid_start_t
+            if elapsed >= AVOID_HOLD_SEC:
+                if min_front >= OBSTACLE_SLOW_DIST:
+                    # Path is clear — resume following
+                    self._avoiding = False
+                    self.get_logger().info('[AVOID] Path clear — resuming follow.')
+                else:
+                    # Still blocked — reset timer and keep turning same direction
+                    self._avoid_start_t = time.monotonic()
+                    self.get_logger().warn(
+                        f'[AVOID] Still blocked at {min_front:.2f}m — continuing turn.',
+                        throttle_duration_sec=0.5)
+
+            if self._avoiding:
+                # Hold position and turn until clear
+                final_linear  = 0.0
+                final_angular = self._avoid_dir * MAX_ANGULAR_VEL
+            else:
+                final_linear  = uwb_linear
+                final_angular = uwb_angular
+
+        elif min_front < OBSTACLE_STOP_DIST:
+            # Enter stop-and-turn avoidance
+            self._avoiding      = True
+            self._avoid_start_t = time.monotonic()
+            self._avoid_dir     = +1.0 if min_left >= min_right else -1.0
+            self.get_logger().warn(
+                f'[AVOID] Obstacle at {min_front:.2f}m — stopping and turning '
+                f'{"LEFT" if self._avoid_dir > 0 else "RIGHT"}')
+            final_linear  = 0.0
+            final_angular = self._avoid_dir * MAX_ANGULAR_VEL
+
+        elif min_front < OBSTACLE_SLOW_DIST:
+            # Slow zone — reduce speed and gently steer away
             proximity = 1.0 - max(0.0, min(1.0,
                 (min_front - OBSTACLE_STOP_DIST) /
                 (OBSTACLE_SLOW_DIST - OBSTACLE_STOP_DIST)
             ))
-
-            # Forward motion: halt completely once inside stop distance to
-            # prevent wheel slip against the obstacle (keeps odometry clean)
-            if min_front <= OBSTACLE_STOP_DIST:
-                final_linear = 0.0
-            else:
-                final_linear = uwb_linear * (1.0 - proximity)
-
-            # Steer toward the side with more clearance
             steer_sign    = +1.0 if min_left >= min_right else -1.0
-            avoid_angular = steer_sign * AVOID_ANG_GAIN * proximity
-
-            # Blend: UWB steering fades out as proximity rises so the cart
-            # steers back toward the person once it has cleared the obstacle
-            final_angular = (1.0 - proximity) * uwb_angular + proximity * avoid_angular
-
+            final_linear  = uwb_linear * (1.0 - proximity)
+            final_angular = (1.0 - proximity) * uwb_angular + proximity * steer_sign * AVOID_ANG_GAIN
             self.get_logger().warn(
-                f'[LIDAR] Obstacle  front={min_front:.2f}m  '
-                f'L={min_left:.2f}m  R={min_right:.2f}m  '
-                f'steer={"LEFT" if steer_sign > 0 else "RIGHT"}  '
-                f'prox={proximity:.2f}',
+                f'[LIDAR] Slow zone  front={min_front:.2f}m  '
+                f'L={min_left:.2f}m  R={min_right:.2f}m  prox={proximity:.2f}',
                 throttle_duration_sec=0.3)
         else:
             final_linear  = uwb_linear
