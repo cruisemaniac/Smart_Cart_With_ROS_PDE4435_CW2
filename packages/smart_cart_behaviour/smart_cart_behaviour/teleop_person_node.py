@@ -2,21 +2,13 @@
 """
 teleop_person_node.py  –  Smart Cart Person Teleop + Remote Control
 ====================================================================
-Hold-to-move: WASD commands are sent only while the key is held down.
-Releasing the key stops the person within one key-repeat interval (~0.12 s).
+Hold-to-move: movement starts on key-press and stops on key-release.
 
-Map-based collision avoidance
-------------------------------
-The person's world position is read from /person/odom.  Before sending any
-forward/backward command, a probe point PERSON_RADIUS ahead of the person in
-the commanded direction is checked against the static obstacle bounding boxes
-extracted from supermarket.sdf.  If the probe lands inside an obstacle the
-linear command is suppressed while angular (turning) is still passed through
-so the person can turn away from the wall.
-
-This prevents the person from ever physically contacting a wall, which in
-turn prevents the diff-drive odometry from drifting (drift happens when wheel
-joints keep spinning while the body is blocked).
+Two-phase key-timeout to handle the OS key-repeat initial delay (~500 ms):
+  - First press  → KEY_FIRST_TIMEOUT (0.60 s) so the person keeps moving
+                   while waiting for terminal key-repeat to kick in.
+  - Repeat active → KEY_HOLD_TIMEOUT (0.10 s) so movement stops within
+                    100 ms of release once repeats are flowing.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   MOVEMENT  (hold key)
@@ -45,6 +37,7 @@ joints keep spinning while the body is blocked).
 """
 
 import sys
+import select
 import tty
 import termios
 import threading
@@ -59,44 +52,49 @@ from std_msgs.msg import String, Int32
 
 # ── Speed settings ─────────────────────────────────────────────────────────
 DEFAULT_LINEAR_SPEED  = 0.6
-DEFAULT_ANGULAR_SPEED = 1.2
+DEFAULT_ANGULAR_SPEED = 0.5
 SPEED_STEP            = 0.1
 MAX_LINEAR_SPEED      = 1.5
 MIN_LINEAR_SPEED      = 0.1
 
-# Hold-to-move: key-repeat fires every ~30–50 ms; timeout must be longer
-KEY_TIMEOUT_SEC = 0.12
+# Two-phase hold-detection timeouts.
+# KEY_FIRST_TIMEOUT bridges the OS key-repeat initial delay (~500 ms on most
+# Linux desktops).  Once rapid repeats are detected, KEY_HOLD_TIMEOUT gives a
+# fast 100 ms stop after the key is released.
+KEY_FIRST_TIMEOUT     = 0.60   # linear keys (W/S) — bridges 500 ms OS repeat delay
+KEY_FIRST_TIMEOUT_ANG = 0.20   # angular keys (A/D) — short to avoid yaw overshoot
+KEY_HOLD_TIMEOUT      = 0.10   # both — once repeat is active, fast stop on release
 
 # ── Person spawn position (must match launch file -x / -y arguments) ──────
-# The diff-drive odometry resets to (0, 0) at spawn, not the world position.
-# We calibrate on the first odom message so world_pos = SPAWN + (odom - odom0).
 PERSON_SPAWN_X = 2.0
 PERSON_SPAWN_Y = 0.0
 
-# ── Map-based collision avoidance — from supermarket.sdf ───────────────────
-# Each entry: (x_min, x_max, y_min, y_max) exact AABB in WORLD frame.
-# Derived directly from SDF pose ± size/2.  No inflation — PERSON_RADIUS
-# provides the clearance from the surface.
-#
-# left_wall:   pose=(0, 2.5, 1)      size=(14, 0.15, 2)
-# right_wall:  pose=(0,-2.5, 1)      size=(14, 0.15, 2)
-# back_wall:   pose=(6.5, 0, 1)      size=(0.15, 5.3, 2)
-# shelf_left:  pose=(3.5, 1.5, .75)  size=(1.8, 0.45, 1.5)
-# shelf_right: pose=(3.5,-1.5, .75)  size=(1.8, 0.45, 1.5)
-# obstacle_box:pose=(2.0, 0.6, .25)  size=(0.3, 0.3, 0.5)
+# ── Map-based collision avoidance — AABBs derived from supermarket.sdf ────
+# Format: (x_min, x_max, y_min, y_max)
 OBSTACLES = [
-    (-7.000,  7.000,  2.425,  2.575),   # left_wall
-    (-7.000,  7.000, -2.575, -2.425),   # right_wall
-    ( 6.425,  6.575, -2.650,  2.650),   # back_wall
-    ( 2.600,  4.400,  1.275,  1.725),   # shelf_left
-    ( 2.600,  4.400, -1.725, -1.275),   # shelf_right
-    ( 1.850,  2.150,  0.450,  0.750),   # obstacle_box
+    # Outer walls
+    ( -7.00,  14.00,   4.90,   5.10),  # left_wall        pose=(3.5, 5.0)  size=(21,0.2)
+    ( -7.00,  14.00,  -5.10,  -4.90),  # right_wall       pose=(3.5,-5.0)
+    (  13.90,  14.10, -5.10,   5.10),  # back_wall        pose=(14.0, 0.0) size=(0.2,10.2)
+    (  -7.10,  -6.90,  2.00,   5.00),  # front_wall_left  pose=(-7.0, 3.5) size=(0.2,3.0)
+    (  -7.10,  -6.90, -5.00,  -2.00),  # front_wall_right pose=(-7.0,-3.5)
+    # Perimeter shelves
+    (  -3.01,  11.01,  4.295,  4.705), # perim_shelf_left  pose=(4.0, 4.5) size=(14.02,0.41)
+    (  -3.01,  11.01, -4.705, -4.295), # perim_shelf_right pose=(4.0,-4.5)
+    # Main aisle shelves
+    (   1.49,   5.51,  1.27,   1.73),  # shelf_A_left  pose=(3.5, 1.5) size=(4.02,0.46)
+    (   1.49,   5.51, -1.73,  -1.27),  # shelf_A_right pose=(3.5,-1.5)
+    (   6.99,  11.01,  1.27,   1.73),  # shelf_B_left  pose=(9.0, 1.5)
+    (   6.99,  11.01, -1.73,  -1.27),  # shelf_B_right pose=(9.0,-1.5)
+    # Checkout counters
+    (  -4.25,  -2.75,  2.85,   3.55),  # checkout_left  pose=(-3.5, 3.2) size=(1.5,0.7)
+    (  -4.25,  -2.75, -3.55,  -2.85),  # checkout_right pose=(-3.5,-3.2)
+    # Cooler units
+    (  12.10,  12.90,  1.25,   4.75),  # cooler_left  pose=(12.5, 3.0) size=(0.8,3.5)
+    (  12.10,  12.90, -4.75,  -1.25),  # cooler_right pose=(12.5,-3.0)
+    # Small obstacle box
+    (   1.85,   2.15,  0.45,   0.75),  # obstacle_box pose=(2.0, 0.6) size=(0.3,0.3)
 ]
-
-# The person stops this far (metres) from any obstacle surface.
-# Set to at least body_radius + braking_margin.
-# At default speed 0.6 m/s, max_accel 2.0 m/s²: braking dist = 0.09 m.
-# 0.35 m gives comfortable margin for all normal approach speeds.
 PERSON_RADIUS = 0.35
 
 # ── Remote button map ──────────────────────────────────────────────────────
@@ -138,23 +136,20 @@ class TeleopPersonNode(Node):
         self._current_mode  = 'IDLE'
         self._running       = True
 
-        # Hold-to-move state
-        self._held_twist = Twist()
-        self._last_key_t = 0.0
+        # Two-phase hold-detection state
+        self._held_twist    = Twist()
+        self._last_key_t    = 0.0       # time of most recent movement key char
+        self._repeat_active = False     # True once rapid repeats detected
+        self._is_angular    = False     # True when last movement key was A/D
 
-        # Person pose in world frame, calibrated from /person/odom.
-        # _odom_init_* captures the first odom reading (which Gazebo may set
-        # to 0,0 or to the spawn world position depending on plugin version).
-        # We subtract it and add the known spawn position so world coords are
-        # always correct regardless of how Gazebo initialises the odom.
+        # Person pose in world frame, calibrated from /person/odom
         self._odom_x      = PERSON_SPAWN_X
         self._odom_y      = PERSON_SPAWN_Y
         self._odom_yaw    = 0.0
         self._odom_init_x = None
         self._odom_init_y = None
         self._odom_ready  = False
-
-        self._blocked = False
+        self._blocked     = False
 
         self._cmd_pub   = self.create_publisher(Twist,  '/person/cmd_vel',    10)
         self._btn_pub   = self.create_publisher(String, '/remote/button',     10)
@@ -175,12 +170,9 @@ class TeleopPersonNode(Node):
         raw_y = msg.pose.pose.position.y
 
         if self._odom_init_x is None:
-            # Calibrate once: whatever Gazebo gives as the first odom reading
-            # (could be 0,0 or the spawn world position), treat it as SPAWN.
             self._odom_init_x = raw_x
             self._odom_init_y = raw_y
 
-        # World position = spawn + displacement from first odom reading
         self._odom_x = PERSON_SPAWN_X + (raw_x - self._odom_init_x)
         self._odom_y = PERSON_SPAWN_Y + (raw_y - self._odom_init_y)
 
@@ -193,53 +185,45 @@ class TeleopPersonNode(Node):
     # ── Map-based collision check ────────────────────────────────────────────
 
     def _is_blocked_in_direction(self, twist: Twist) -> bool:
-        """
-        For each obstacle AABB, find the nearest point on its surface to the
-        person.  If that distance is less than PERSON_RADIUS AND the person is
-        moving toward that obstacle, block the linear command.
-
-        This handles all approach angles, including diagonal approaches to
-        shelf corners that a single forward-probe would miss.  Angular (turn)
-        commands are never blocked so the person can always turn away.
-        """
         if twist.linear.x == 0.0 or not self._odom_ready:
             return False
 
-        sign = 1.0 if twist.linear.x > 0 else -1.0
+        sign    = 1.0 if twist.linear.x > 0 else -1.0
         move_dx = math.cos(self._odom_yaw) * sign
         move_dy = math.sin(self._odom_yaw) * sign
-        px = self._odom_x
-        py = self._odom_y
+        px, py  = self._odom_x, self._odom_y
 
         for (x_min, x_max, y_min, y_max) in OBSTACLES:
-            # Nearest point on this AABB to the person's current position
-            nx = max(x_min, min(px, x_max))
-            ny = max(y_min, min(py, y_max))
-
-            # Vector from person to that nearest point
+            nx   = max(x_min, min(px, x_max))
+            ny   = max(y_min, min(py, y_max))
             to_x = nx - px
             to_y = ny - py
             dist = math.sqrt(to_x * to_x + to_y * to_y)
-
-            if dist < PERSON_RADIUS:
-                # Only block if the commanded direction has a component
-                # toward this obstacle (positive dot product).
-                # This allows backing away from an already-close obstacle.
-                if to_x * move_dx + to_y * move_dy > 0.0:
-                    return True
+            if dist < PERSON_RADIUS and to_x * move_dx + to_y * move_dy > 0.0:
+                return True
 
         return False
 
     # ── Timers ──────────────────────────────────────────────────────────────
 
     def _publish_cb(self):
-        """20 Hz — hold-to-move with map-based obstacle blocking."""
-        key_held = (time.monotonic() - self._last_key_t) <= KEY_TIMEOUT_SEC
+        """20 Hz — two-phase hold-to-move with obstacle blocking."""
+        now     = time.monotonic()
+        elapsed = now - self._last_key_t
+
+        if self._repeat_active:
+            timeout = KEY_HOLD_TIMEOUT
+        elif self._is_angular:
+            timeout = KEY_FIRST_TIMEOUT_ANG   # short — prevents yaw overshoot
+        else:
+            timeout = KEY_FIRST_TIMEOUT
+        key_held = elapsed <= timeout
 
         if not key_held:
             if self._held_twist.linear.x != 0.0 or self._held_twist.angular.z != 0.0:
-                self._held_twist = Twist()
-                self._blocked    = False
+                self._held_twist    = Twist()
+                self._repeat_active = False
+                self._blocked       = False
                 self._cmd_pub.publish(Twist())
             return
 
@@ -258,11 +242,21 @@ class TeleopPersonNode(Node):
         self._cmd_pub.publish(out)
 
     def _status_cb(self):
+        if self._repeat_active:
+            timeout = KEY_HOLD_TIMEOUT
+        elif self._is_angular:
+            timeout = KEY_FIRST_TIMEOUT_ANG
+        else:
+            timeout = KEY_FIRST_TIMEOUT
+        elapsed = time.monotonic() - self._last_key_t
+        moving  = elapsed <= timeout and (
+            self._held_twist.linear.x != 0.0 or self._held_twist.angular.z != 0.0)
         cprint(
             f'[Status] speed={self._linear_speed:.1f}m/s  '
             f'mode={self._current_mode}  '
             f'pos=({self._odom_x:.2f},{self._odom_y:.2f})  '
             f'yaw={math.degrees(self._odom_yaw):.0f}°'
+            f'{"  [MOVING]"  if moving  else ""}  '
             f'{"  [BLOCKED]" if self._blocked else ""}  '
         )
 
@@ -318,31 +312,58 @@ class TeleopPersonNode(Node):
             cprint(f'[SPEED] Reset to {DEFAULT_LINEAR_SPEED:.1f} m/s')
             return
 
-        # Movement — hold-to-move
+        # Movement — two-phase hold-to-move
         twist = self._key_to_twist(key)
         if twist is not None:
+            now = time.monotonic()
+            gap = now - self._last_key_t
+            is_ang = key in ('a', 'd', '\x1b[D', '\x1b[C')
+
+            if gap <= KEY_HOLD_TIMEOUT:
+                self._repeat_active = True
+            else:
+                self._repeat_active = False
+
+            self._is_angular = is_ang
+            self._last_key_t = now
             self._held_twist = twist
-            self._last_key_t = time.monotonic()
 
     def stop(self):
         self._running = False
         self._cmd_pub.publish(Twist())
 
 
-# ── Terminal key reader ─────────────────────────────────────────────────────
+# ── Non-blocking terminal key reader ───────────────────────────────────────
 
-def get_key(settings) -> str:
-    tty.setraw(sys.stdin.fileno())
-    key = sys.stdin.read(1)
-    if key == '\x1b':
-        key2 = sys.stdin.read(1)
-        if key2 == '[':
-            key3 = sys.stdin.read(1)
-            key  = '\x1b[' + key3
-        else:
-            key = '\x1b'
-    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-    return key
+def _read_key(fd) -> str | None:
+    """
+    Read one keypress from raw stdin using select (non-blocking, 20 ms poll).
+    Returns the key string, or None if no input was available.
+    Handles ESC sequences (arrow keys).
+    """
+    r, _, _ = select.select([sys.stdin], [], [], 0.020)
+    if not r:
+        return None
+
+    ch = sys.stdin.read(1)
+    if ch != '\x1b':
+        return ch
+
+    # ESC — try to read the rest of an escape sequence within 20 ms
+    r2, _, _ = select.select([sys.stdin], [], [], 0.020)
+    if not r2:
+        return '\x1b'          # bare ESC key
+
+    ch2 = sys.stdin.read(1)
+    if ch2 != '[':
+        return '\x1b'
+
+    r3, _, _ = select.select([sys.stdin], [], [], 0.020)
+    if not r3:
+        return '\x1b'
+
+    ch3 = sys.stdin.read(1)
+    return '\x1b[' + ch3      # e.g. '\x1b[A' = Up arrow
 
 
 def main(args=None):
@@ -359,10 +380,14 @@ def main(args=None):
     sys.stdout.write(f'  Initial speed: {DEFAULT_LINEAR_SPEED} m/s\r\n\r\n')
     sys.stdout.flush()
 
+    fd = sys.stdin.fileno()
     try:
+        tty.setraw(fd)
         while rclpy.ok() and node._running:
-            key = get_key(settings)
-            if key in ('\x1b', '\x03'):
+            key = _read_key(fd)
+            if key is None:
+                continue
+            if key in ('\x1b', '\x03'):   # ESC or Ctrl+C
                 break
             node.process_key(key.lower() if key.isalpha() else key)
 
@@ -370,7 +395,7 @@ def main(args=None):
         cprint(f'Error: {e}')
 
     finally:
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+        termios.tcsetattr(fd, termios.TCSADRAIN, settings)
         node.stop()
         node.destroy_node()
         rclpy.shutdown()
