@@ -105,6 +105,18 @@ Entries must include the date, tasks completed, and individual contribution.
 
 ---
 
+## Demonstration Video
+
+Watch the full simulation demo below:
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=rQya0ex2MFQ">
+    <img src="https://img.youtube.com/vi/rQya0ex2MFQ/0.jpg" alt="Smart Cart Demo Video" />
+  </a>
+</p>
+
+---
+
 ## Report
 
 The IEEE two-column LaTeX report is located in:
