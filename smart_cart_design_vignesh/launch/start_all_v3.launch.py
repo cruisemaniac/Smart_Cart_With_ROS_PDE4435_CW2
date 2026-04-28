@@ -12,9 +12,9 @@ After launch completes, open a second terminal:
 Controls:
   W/S    move person forward/backward
   A/D    turn person left/right
-  1      remote STOP   – cart stops
-  2      remote FOLLOW – cart follows person
-  3      remote IDLE   – cart standby
+  1      remote STOP   - cart stops
+  2      remote FOLLOW - cart follows person
+  3      remote IDLE   - cart standby
   +/-    person speed
   ESC    quit
 """
@@ -66,7 +66,7 @@ def generate_launch_description():
     return LaunchDescription([
 
         LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
-        LogInfo(msg='  Smart Cart Simulation v3 – Mesh URDF (smart_cart_3)'),
+        LogInfo(msg='  Smart Cart Simulation v3 - Mesh URDF (smart_cart_3)'),
         LogInfo(msg='  Cart starts IDLE. Run teleop in a second terminal.'),
         LogInfo(msg='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'),
 
